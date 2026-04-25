@@ -226,3 +226,118 @@ class TestStructure:
 
     def test_label_lookup(self, headcount_recycling: MarkovChain) -> None:
         assert headcount_recycling.label(2) == "Senior"
+
+
+# Phase 2 — Spectral analysis ─────────────────────────────────────────────
+
+
+class TestEigenvalues:
+    def test_one_is_eigenvalue(self, headcount_recycling: MarkovChain) -> None:
+        eigs = headcount_recycling.eigenvalues()
+        assert np.isclose(np.abs(eigs[0]), 1.0)
+
+    def test_all_eigenvalues_in_unit_disk(
+        self, headcount_recycling: MarkovChain
+    ) -> None:
+        eigs = headcount_recycling.eigenvalues()
+        assert np.all(np.abs(eigs) <= 1.0 + 1e-10)
+
+    def test_eigenvalues_sorted_by_modulus(
+        self, headcount_recycling: MarkovChain
+    ) -> None:
+        eigs = headcount_recycling.eigenvalues()
+        moduli = np.abs(eigs)
+        assert np.all(moduli[:-1] >= moduli[1:] - 1e-12)
+
+
+class TestStationary:
+    def test_linear_solver_satisfies_pi_p(
+        self, headcount_recycling: MarkovChain
+    ) -> None:
+        pi = headcount_recycling.stationary(method="linear")
+        np.testing.assert_allclose(
+            pi @ headcount_recycling.P, pi, atol=1e-9
+        )
+
+    def test_eigen_solver_satisfies_pi_p(
+        self, headcount_recycling: MarkovChain
+    ) -> None:
+        pi = headcount_recycling.stationary(method="eigen")
+        np.testing.assert_allclose(
+            pi @ headcount_recycling.P, pi, atol=1e-9
+        )
+
+    def test_methods_agree(self, headcount_recycling: MarkovChain) -> None:
+        a = headcount_recycling.stationary(method="linear")
+        b = headcount_recycling.stationary(method="eigen")
+        np.testing.assert_allclose(a, b, atol=1e-8)
+
+    def test_unknown_method(self, headcount_recycling: MarkovChain) -> None:
+        with pytest.raises(ValueError, match="Unknown method"):
+            headcount_recycling.stationary(method="bogus")
+
+    def test_stationary_matches_hand_solution(
+        self, headcount_recycling: MarkovChain
+    ) -> None:
+        """Compare against the hand calculation in notes/phase2-dtmc-analysis.md."""
+        pi = headcount_recycling.stationary()
+        # Junior fraction is 1 / (1 + 0.75 + 1.5 + 0.14).
+        expected_junior = 1.0 / 3.39
+        assert np.isclose(pi[0], expected_junior, atol=1e-3)
+
+
+class TestSpectralGap:
+    def test_gap_in_unit_interval(self, headcount_recycling: MarkovChain) -> None:
+        gap = headcount_recycling.spectral_gap()
+        assert 0.0 <= gap <= 1.0
+
+    def test_iid_chain_has_full_gap(self) -> None:
+        """If every row of P equals pi, |lambda_2| = 0 and gap = 1."""
+        P = np.tile(np.array([0.2, 0.3, 0.5]), (3, 1))
+        mc = MarkovChain(P)
+        assert np.isclose(mc.spectral_gap(), 1.0, atol=1e-10)
+
+    def test_high_diagonal_has_small_gap(
+        self, headcount_recycling: MarkovChain
+    ) -> None:
+        # Headcount chain has p_ii close to 1 for transient states, so the
+        # second eigenvalue is also close to 1 and the gap is small.
+        assert headcount_recycling.spectral_gap() < 0.05
+
+
+class TestMixingTime:
+    def test_iid_chain_mixes_in_one_step(self) -> None:
+        P = np.tile(np.array([0.2, 0.3, 0.5]), (3, 1))
+        mc = MarkovChain(P)
+        assert mc.mixing_time() == 1
+
+    def test_invalid_eps(self, headcount_recycling: MarkovChain) -> None:
+        with pytest.raises(ValueError, match="eps"):
+            headcount_recycling.mixing_time(eps=1.5)
+
+    def test_smaller_eps_takes_longer(
+        self, headcount_recycling: MarkovChain
+    ) -> None:
+        t_loose = headcount_recycling.mixing_time(eps=0.25)
+        t_tight = headcount_recycling.mixing_time(eps=0.01)
+        assert t_tight >= t_loose
+
+
+# Periodicity ─────────────────────────────────────────────────────────────
+
+
+class TestPeriod:
+    def test_self_loop_period_is_one(self, headcount_recycling: MarkovChain) -> None:
+        for i in range(headcount_recycling.n_states):
+            assert headcount_recycling.period(i) == 1
+
+    def test_period_two_chain(self) -> None:
+        # Two-state alternating chain: P = [[0,1],[1,0]] has period 2.
+        P = np.array([[0.0, 1.0], [1.0, 0.0]])
+        mc = MarkovChain(P)
+        assert mc.period(0) == 2
+        assert mc.period(1) == 2
+        assert mc.is_aperiodic() is False
+
+    def test_aperiodic(self, headcount_recycling: MarkovChain) -> None:
+        assert headcount_recycling.is_aperiodic() is True

@@ -3,8 +3,10 @@
 Wraps a row-stochastic transition matrix P and provides:
 
 - n-step transitions P^n
-- a placeholder for the stationary distribution (full solver in Phase 2)
-- structural queries: irreducibility, absorption, communication classes
+- structural queries: irreducibility, absorption, communication classes,
+  periodicity
+- spectral analysis: stationary distribution, eigenvalues, spectral gap,
+  mixing-time bound
 
 Conventions:
 
@@ -17,11 +19,14 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from math import gcd
+from typing import Optional
 
 import numpy as np
 from numpy.typing import NDArray
 
 ArrayF = NDArray[np.float64]
+ArrayC = NDArray[np.complex128]
 
 
 @dataclass
@@ -100,21 +105,44 @@ class MarkovChain:
         return pi @ self.n_step(n)
 
     # ──────────────────────────────────────────────────────────────────
-    # Stationary distribution (placeholder; full Phase 2 solver later)
+    # Spectral analysis
     # ──────────────────────────────────────────────────────────────────
 
-    def stationary(self) -> ArrayF:
+    def eigenvalues(self) -> ArrayC:
+        """Return the eigenvalues of P, sorted by descending modulus.
+
+        For a row-stochastic matrix the spectrum lies in the closed unit
+        disk and contains 1. Eigenvalues are returned as complex numbers;
+        callers can take ``.real`` when periodicity is not a concern.
+        """
+        eigs = np.linalg.eigvals(self.P)
+        order = np.argsort(-np.abs(eigs), kind="stable")
+        return eigs[order]
+
+    def stationary(self, method: str = "linear") -> ArrayF:
         """Return a stationary distribution pi such that pi P = pi.
 
-        Phase 1 placeholder: solves the linear system using the left
-        eigenvector of P with eigenvalue 1. For multiple stationary
-        distributions (reducible chains) the result is one valid solution
-        with no guarantee of uniqueness; Phase 2 develops the full theory.
+        Args:
+            method: One of ``"linear"`` (default — solve the augmented linear
+                system pi (P - I) = 0 with sum(pi) = 1) or ``"eigen"`` (take
+                the left eigenvector of P with eigenvalue closest to 1).
 
         Returns:
             Row vector of length K, non-negative, summing to 1.
+
+        Notes:
+            For an irreducible aperiodic chain the stationary distribution
+            is unique and either method recovers it. For reducible chains
+            the linear solver returns one stationary distribution but
+            uniqueness is not guaranteed.
         """
-        # Solve pi (P - I) = 0 with sum(pi) = 1 via least squares.
+        if method == "linear":
+            return self._stationary_linear()
+        if method == "eigen":
+            return self._stationary_eigen()
+        raise ValueError(f"Unknown method: {method!r}. Use 'linear' or 'eigen'.")
+
+    def _stationary_linear(self) -> ArrayF:
         K = self.n_states
         A = np.vstack([(self.P.T - np.eye(K)), np.ones(K)])
         b = np.zeros(K + 1)
@@ -125,6 +153,65 @@ class MarkovChain:
         if s == 0.0:
             raise RuntimeError("Stationary solver produced the zero vector.")
         return pi / s
+
+    def _stationary_eigen(self) -> ArrayF:
+        # Left eigenvectors of P are right eigenvectors of P.T.
+        eigvals, eigvecs = np.linalg.eig(self.P.T)
+        idx = int(np.argmin(np.abs(eigvals - 1.0)))
+        v = eigvecs[:, idx]
+        # The eigenvector should be (numerically) real for an irreducible
+        # aperiodic chain; drop a tiny imaginary part.
+        v = np.real_if_close(v, tol=1e6)
+        v = np.asarray(v, dtype=np.float64)
+        # Sign and scale so the result is a probability vector.
+        if v.sum() < 0:
+            v = -v
+        v = np.clip(v, 0.0, None)
+        s = v.sum()
+        if s == 0.0:
+            raise RuntimeError("Eigen stationary solver produced the zero vector.")
+        return v / s
+
+    def spectral_gap(self) -> float:
+        """Return the spectral gap 1 - |lambda_2|.
+
+        ``lambda_2`` is the eigenvalue with the second-largest modulus. For an
+        irreducible aperiodic finite chain this is in (0, 1] and controls
+        the geometric rate of convergence to the stationary distribution.
+        """
+        eigs = self.eigenvalues()
+        if eigs.size < 2:
+            return 1.0
+        return float(1.0 - np.abs(eigs[1]))
+
+    def mixing_time(self, eps: float = 0.25) -> int:
+        """Smallest n such that ||P^n[i, :] - pi||_TV <= eps for all i.
+
+        Uses total variation distance, defined as half the L1 distance between
+        rows of P^n and the stationary distribution. The bound is computed
+        empirically by powering P; for chains with very small spectral gap
+        the result may exceed ``max_iter`` (in which case the upper bound is
+        returned).
+
+        Args:
+            eps: Target total variation tolerance (default 1/4, the standard
+                convention from Levin–Peres–Wilmer).
+
+        Returns:
+            Integer n.
+        """
+        if not (0.0 < eps < 1.0):
+            raise ValueError("eps must lie in (0, 1).")
+        pi = self.stationary()
+        K = self.n_states
+        max_iter = 10_000
+        Pn = np.eye(K)
+        for n in range(1, max_iter + 1):
+            Pn = Pn @ self.P
+            tv = 0.5 * np.abs(Pn - pi).sum(axis=1).max()
+            if tv <= eps:
+                return n
+        return max_iter
 
     # ──────────────────────────────────────────────────────────────────
     # Structural properties
@@ -181,6 +268,41 @@ class MarkovChain:
             classes.append(cls)
             seen |= cls
         return classes
+
+    # ──────────────────────────────────────────────────────────────────
+    # Periodicity
+    # ──────────────────────────────────────────────────────────────────
+
+    def period(self, i: int, max_n: Optional[int] = None) -> int:
+        """Return the period d(i) = gcd{n >= 1 : p_ii^(n) > 0}.
+
+        Args:
+            i: State index.
+            max_n: Largest power of P to inspect. Defaults to ``2 * K``,
+                which is sufficient for finite chains because cycle lengths
+                are bounded by the number of states in any communication
+                class.
+
+        Returns:
+            Positive integer (the period). Returns 0 if no return path
+            exists (transient state with no self-recurrence).
+        """
+        K = self.n_states
+        if max_n is None:
+            max_n = max(2 * K, 4)
+        Pn = np.eye(K)
+        d = 0
+        for n in range(1, max_n + 1):
+            Pn = Pn @ self.P
+            if Pn[i, i] > self.atol:
+                d = gcd(d, n)
+                if d == 1:
+                    return 1
+        return d
+
+    def is_aperiodic(self) -> bool:
+        """True iff every state has period 1."""
+        return all(self.period(i) == 1 for i in range(self.n_states))
 
     # ──────────────────────────────────────────────────────────────────
     # Convenience

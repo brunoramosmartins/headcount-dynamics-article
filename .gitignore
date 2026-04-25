@@ -40,9 +40,11 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Generated figures (keep .gitkeep)
-figures/*
-!figures/.gitkeep
+# Figures: track committed PNGs/PDFs/SVGs but ignore intermediate caches.
+# Figures listed as roadmap deliverables are committed as reproducible
+# artefacts produced by scripts in scripts/.
+figures/_cache/
+figures/*.tmp.*
 
 # Claude Code runtime (worktrees, local settings, logs) — keep CLAUDE.md tracked
 .claude/
