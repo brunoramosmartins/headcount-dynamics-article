@@ -77,7 +77,6 @@ def canonical_form(P: ArrayF | MarkovChain) -> CanonicalForm:
         ValueError: if no absorbing state is found.
     """
     arr, atol = _as_matrix(P)
-    K = arr.shape[0]
     diag = np.diag(arr)
     absorbing_mask = np.isclose(diag, 1.0, atol=atol)
     absorbing = np.where(absorbing_mask)[0].astype(np.int64)
@@ -98,8 +97,14 @@ def canonical_form(P: ArrayF | MarkovChain) -> CanonicalForm:
 
 
 def is_absorbing_chain(P: ArrayF | MarkovChain) -> bool:
-    """True iff every transient state can reach an absorbing state."""
-    cf = canonical_form(P)
+    """True iff every transient state can reach an absorbing state.
+
+    Returns ``False`` when ``P`` has no absorbing state at all.
+    """
+    try:
+        cf = canonical_form(P)
+    except ValueError:
+        return False
     if cf.transient.size == 0:
         return True
     # Reachability within the transient block plus a step to absorbing.

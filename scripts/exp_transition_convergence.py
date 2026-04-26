@@ -50,7 +50,7 @@ def main() -> None:
     sns.set_style("white")
     fig, axes = plt.subplots(1, len(panels), figsize=(3.0 * len(panels), 3.2))
 
-    for ax, (label, M) in zip(axes, panels):
+    for ax, (label, M) in zip(axes, panels, strict=True):
         sns.heatmap(
             M,
             ax=ax,
