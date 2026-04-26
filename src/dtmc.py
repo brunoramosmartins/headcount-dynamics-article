@@ -20,7 +20,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from math import gcd
-from typing import Optional
 
 import numpy as np
 from numpy.typing import NDArray
@@ -273,7 +272,7 @@ class MarkovChain:
     # Periodicity
     # ──────────────────────────────────────────────────────────────────
 
-    def period(self, i: int, max_n: Optional[int] = None) -> int:
+    def period(self, i: int, max_n: int | None = None) -> int:
         """Return the period d(i) = gcd{n >= 1 : p_ii^(n) > 0}.
 
         Args:

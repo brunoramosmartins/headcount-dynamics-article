@@ -62,7 +62,7 @@ def main() -> None:
         color=["#1D76DB", "#5319E7", "#0E8A16"],
         edgecolor="black",
     )
-    for b, v in zip(bars, t):
+    for b, v in zip(bars, t, strict=True):
         ax_t.text(
             b.get_x() + b.get_width() / 2,
             v + 4,
@@ -84,7 +84,7 @@ def main() -> None:
         color=["#1D76DB", "#5319E7", "#0E8A16"],
         edgecolor="black",
     )
-    for b, v in zip(bars2, p_reach_senior):
+    for b, v in zip(bars2, p_reach_senior, strict=True):
         ax_p.text(
             b.get_x() + b.get_width() / 2,
             v + 0.02,
