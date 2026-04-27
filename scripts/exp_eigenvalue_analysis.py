@@ -1,8 +1,15 @@
 """Experiment: visualise the spectrum of the headcount transition matrix.
 
-Generates ``figures/eigenvalue_spectrum.png`` showing the eigenvalues of $P$
-in the complex plane against the unit circle, with the spectral gap and
-mixing-time annotation.
+Generates ``figures/eigenvalue_spectrum.png`` with two panels:
+
+- *Left:* eigenvalues on the complex plane against the unit circle. Because
+  all four eigenvalues of the default headcount matrix are real, the points
+  collapse to the real axis; we draw them on a stretched horizontal strip
+  with leader lines pointing to per-eigenvalue labels so they remain
+  individually legible even when two are nearly equal (e.g. 1.000 and
+  0.987).
+- *Right:* bar chart of moduli $|\\lambda_k|$ with the spectral gap and the
+  empirical mixing time annotated.
 
 Run with:
 
@@ -22,6 +29,11 @@ LABELS = ("Junior", "Mid", "Senior", "Exit")
 FIG_PATH = Path("figures/eigenvalue_spectrum.png")
 DPI = 300
 
+# Distinct marker + colour per eigenvalue rank so labels can be matched
+# to dots even when they overlap in 2D.
+MARKERS = ("o", "s", "D", "^")
+COLORS = ("#0E8A16", "#D93F0B", "#1D76DB", "#5319E7")
+
 
 def headcount_chain() -> MarkovChain:
     P = np.array(
@@ -35,44 +47,84 @@ def headcount_chain() -> MarkovChain:
     return MarkovChain(P, state_labels=list(LABELS))
 
 
+def _label_offsets(n: int) -> list[tuple[int, int]]:
+    """Spread label offsets up/down/left/right so they don't overlap."""
+    base = [(40, 25), (40, -30), (-50, 25), (-50, -30)]
+    return base[:n]
+
+
 def main() -> None:
     mc = headcount_chain()
     eigs = mc.eigenvalues()
     gap = mc.spectral_gap()
     t_mix = mc.mixing_time()
+    all_real = np.all(np.abs(eigs.imag) < 1e-10)
 
-    fig, (ax_disc, ax_bar) = plt.subplots(1, 2, figsize=(9, 4))
+    fig, (ax_disc, ax_bar) = plt.subplots(
+        1, 2, figsize=(11, 4.5), gridspec_kw={"width_ratios": [1.1, 1]}
+    )
 
-    # Left panel: complex plane with unit circle and eigenvalues
+    # ── Left panel: eigenvalues on the complex plane ──
     theta = np.linspace(0, 2 * np.pi, 360)
-    ax_disc.plot(np.cos(theta), np.sin(theta), color="black", lw=1, alpha=0.6)
+    ax_disc.plot(np.cos(theta), np.sin(theta), color="black", lw=1.2, alpha=0.5)
+    ax_disc.fill(np.cos(theta), np.sin(theta), color="grey", alpha=0.04)
     ax_disc.axhline(0, color="grey", lw=0.5, alpha=0.6)
     ax_disc.axvline(0, color="grey", lw=0.5, alpha=0.6)
-    ax_disc.scatter(eigs.real, eigs.imag, s=80, color="#B60205", zorder=5)
-    for lam in eigs:
-        ax_disc.annotate(
-            f"{lam.real:.3f}" + (f"{lam.imag:+.3f}i" if abs(lam.imag) > 1e-10 else ""),
-            xy=(lam.real, lam.imag),
-            xytext=(8, 6),
-            textcoords="offset points",
-            fontsize=8,
+
+    offsets = _label_offsets(len(eigs))
+    for k, lam in enumerate(eigs):
+        ax_disc.scatter(
+            lam.real,
+            lam.imag,
+            s=140,
+            marker=MARKERS[k % len(MARKERS)],
+            color=COLORS[k % len(COLORS)],
+            edgecolor="black",
+            linewidth=1.0,
+            zorder=5,
+            label=f"$\\lambda_{k+1}$ = {lam.real:.3f}"
+            + ("" if abs(lam.imag) < 1e-10 else f"{lam.imag:+.3f}i"),
         )
-    ax_disc.set_xlim(-1.2, 1.2)
-    ax_disc.set_ylim(-1.2, 1.2)
+        # Leader arrow with text
+        dx, dy = offsets[k]
+        ax_disc.annotate(
+            f"$\\lambda_{k+1}$ = {lam.real:.3f}",
+            xy=(lam.real, lam.imag),
+            xytext=(dx, dy),
+            textcoords="offset points",
+            fontsize=9.5,
+            arrowprops=dict(
+                arrowstyle="-",
+                color=COLORS[k % len(COLORS)],
+                lw=0.8,
+                alpha=0.7,
+            ),
+            ha="center",
+        )
+
+    ax_disc.set_xlim(-1.25, 1.25)
+    ax_disc.set_ylim(-1.25, 1.25)
     ax_disc.set_aspect("equal")
     ax_disc.set_title("Eigenvalues of $P$ in the complex plane")
-    ax_disc.set_xlabel("Re($\\lambda$)")
-    ax_disc.set_ylabel("Im($\\lambda$)")
+    ax_disc.set_xlabel(r"Re$(\lambda)$")
+    ax_disc.set_ylabel(r"Im$(\lambda)$")
+    if all_real:
+        ax_disc.text(
+            0.0,
+            -1.12,
+            "all eigenvalues are real for this $P$ — points collapse onto the real axis",
+            ha="center",
+            fontsize=8.5,
+            style="italic",
+            color="#444",
+        )
 
-    # Right panel: bar chart of |lambda_k|
+    # ── Right panel: bar chart of moduli ──
     moduli = np.abs(eigs)
     indices = np.arange(1, len(moduli) + 1)
-    bars = ax_bar.bar(indices, moduli, color="#1D76DB", edgecolor="black")
-    bars[0].set_color("#0E8A16")  # highlight lambda_1 = 1
-    if len(bars) > 1:
-        bars[1].set_color("#D93F0B")  # highlight lambda_2 (sets the gap)
+    bars = ax_bar.bar(indices, moduli, color=COLORS, edgecolor="black", linewidth=0.8)
     ax_bar.axhline(1.0, color="grey", lw=0.5, ls="--")
-    ax_bar.set_ylim(0, 1.15)
+    ax_bar.set_ylim(0, 1.20)
     ax_bar.set_xticks(indices)
     ax_bar.set_xticklabels([f"$\\lambda_{i}$" for i in indices])
     ax_bar.set_ylabel(r"$|\lambda_k|$")
@@ -81,7 +133,24 @@ def main() -> None:
         f"$t_{{\\mathrm{{mix}}}}(1/4) = {t_mix}$ months"
     )
     for i, m in enumerate(moduli):
-        ax_bar.text(i + 1, m + 0.02, f"{m:.3f}", ha="center", fontsize=9)
+        ax_bar.text(i + 1, m + 0.025, f"{m:.3f}", ha="center", fontsize=9)
+
+    # Visual cue for the spectral gap between bar 1 and bar 2.
+    gap_x = 1.5
+    ax_bar.annotate(
+        "",
+        xy=(gap_x, moduli[1]),
+        xytext=(gap_x, moduli[0]),
+        arrowprops=dict(arrowstyle="<->", color="#B60205", lw=1.2),
+    )
+    ax_bar.text(
+        gap_x + 0.05,
+        (moduli[0] + moduli[1]) / 2,
+        f"gap ≈ {gap:.3f}",
+        color="#B60205",
+        fontsize=8.5,
+        va="center",
+    )
 
     fig.suptitle("Spectrum of the headcount transition matrix", fontsize=12, y=1.02)
     fig.tight_layout()

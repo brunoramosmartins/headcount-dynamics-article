@@ -20,7 +20,7 @@ A row vector $\pi = (\pi_1, \ldots, \pi_K)$ is a **stationary distribution**
 of the chain with transition matrix $P$ if
 
 $$
-\pi P \;=\; \pi, \qquad \pi_i \geq 0, \qquad \sum_{i \in S} \pi_i \;=\; 1.
+\pi P  =  \pi, \qquad \pi_i \geq 0, \qquad \sum_{i \in S} \pi_i  =  1.
 $$
 
 Equivalently, $\pi$ is a left eigenvector of $P$ with eigenvalue $1$, scaled
@@ -35,7 +35,7 @@ distribution exists.
 **Proof (Cesàro average).** Fix any state $i$ and define
 
 $$
-\bar{\pi}_n \;=\; \frac{1}{n} \sum_{k=0}^{n-1} e_i P^k,
+\bar{\pi}_n  =  \frac{1}{n} \sum_{k=0}^{n-1} e_i P^k,
 $$
 
 where $e_i$ is the indicator row vector of state $i$. Each $\bar{\pi}_n$ is
@@ -46,14 +46,14 @@ By compactness, $\{\bar{\pi}_n\}$ has a convergent subsequence
 $\bar{\pi}_{n_j} \to \pi$. Then
 
 $$
-\bar{\pi}_n P - \bar{\pi}_n \;=\; \frac{1}{n} \left( e_i P^n - e_i \right),
+\bar{\pi}_n P - \bar{\pi}_n  =  \frac{1}{n} \left( e_i P^n - e_i \right),
 $$
 
 which has $\ell_1$-norm bounded by $2/n$ and hence vanishes as $n \to \infty$.
 Taking the limit along the subsequence,
 
 $$
-\pi P - \pi \;=\; \lim_{j \to \infty} \left( \bar{\pi}_{n_j} P - \bar{\pi}_{n_j} \right) \;=\; 0,
+\pi P - \pi  =  \lim_{j \to \infty} \left( \bar{\pi}_{n_j} P - \bar{\pi}_{n_j} \right)  =  0,
 $$
 
 so $\pi P = \pi$, and $\pi \in \Delta_K$ is a stationary distribution. $\blacksquare$
@@ -68,7 +68,7 @@ where $\pi$ is the stationary distribution from §1.2. Suppose $\pi'$ is another
 stationary distribution. Then for every $n$,
 
 $$
-\pi' \;=\; \pi' P^n \;\xrightarrow{n \to \infty}\; \pi' \cdot (\mathbf{1} \pi) \;=\; (\pi' \mathbf{1}) \cdot \pi \;=\; \pi.
+\pi'  =  \pi' P^n  \xrightarrow{n \to \infty}  \pi' \cdot (\mathbf{1} \pi)  =  (\pi' \mathbf{1}) \cdot \pi  =  \pi.
 $$
 
 Hence $\pi' = \pi$. $\blacksquare$
@@ -92,7 +92,7 @@ eigenvector $\mathbf{1}$).
 $\|v\|_\infty = \max_i |v_i|$ be attained at index $i^*$. Then
 
 $$
-|\lambda| \cdot \|v\|_\infty \;=\; |\lambda v_{i^*}| \;=\; \left| \sum_j p_{i^* j} v_j \right| \;\leq\; \sum_j p_{i^* j} \, |v_j| \;\leq\; \|v\|_\infty \cdot \sum_j p_{i^* j} \;=\; \|v\|_\infty.
+|\lambda| \cdot \|v\|_\infty  =  |\lambda v_{i^*}|  =  \left| \sum_j p_{i^* j} v_j \right|  \leq  \sum_j p_{i^* j} \, |v_j|  \leq  \|v\|_\infty \cdot \sum_j p_{i^* j}  =  \|v\|_\infty.
 $$
 
 Hence $|\lambda| \leq 1$. The vector $\mathbf{1}$ satisfies $P \mathbf{1} = \mathbf{1}$
@@ -124,7 +124,7 @@ aperiodic Markov chain with stationary distribution $\pi$. Then for every
 state $i, j \in S$,
 
 $$
-\lim_{n \to \infty} p_{ij}^{(n)} \;=\; \pi_j.
+\lim_{n \to \infty} p_{ij}^{(n)}  =  \pi_j.
 $$
 
 In matrix form, $P^n \to \mathbf{1} \pi$ as $n \to \infty$, where
@@ -137,7 +137,7 @@ $X_0 = i$ and $Y_0 \sim \pi$. Run them on the same probability space.
 Define the coupling time
 
 $$
-\tau \;=\; \min\{n \geq 0 : X_n = Y_n\}.
+\tau  =  \min\{n \geq 0 : X_n = Y_n\}.
 $$
 
 After they meet, replace $Y$ by $X$. Because the chain is irreducible and
@@ -145,7 +145,7 @@ aperiodic on a finite state space, $P(\tau < \infty) = 1$ — in fact $\tau$
 has finite expectation. For any state $j$,
 
 $$
-|p_{ij}^{(n)} - \pi_j| \;=\; |P(X_n = j) - P(Y_n = j)| \;\leq\; P(\tau > n) \;\to\; 0.
+|p_{ij}^{(n)} - \pi_j|  =  |P(X_n = j) - P(Y_n = j)|  \leq  P(\tau > n)  \to  0.
 $$
 
 The reason aperiodicity is essential: without it, $X_n$ and $Y_n$ may have
@@ -159,21 +159,21 @@ Assume $P$ has $K$ distinct eigenvalues $1 = \lambda_1 > |\lambda_2| \geq \ldots
 Then $P$ admits the spectral decomposition
 
 $$
-P \;=\; \sum_{k=1}^K \lambda_k \, u_k v_k^\top,
+P  =  \sum_{k=1}^K \lambda_k \, u_k v_k^\top,
 $$
 
 where $u_k$ and $v_k$ are right and left eigenvectors with $v_k^\top u_\ell = \delta_{k\ell}$,
 $u_1 = \mathbf{1}$, $v_1 = \pi^\top$. Hence
 
 $$
-P^n \;=\; \mathbf{1} \pi + \sum_{k=2}^K \lambda_k^n \, u_k v_k^\top.
+P^n  =  \mathbf{1} \pi + \sum_{k=2}^K \lambda_k^n \, u_k v_k^\top.
 $$
 
 Since $|\lambda_k| < 1$ for $k \geq 2$, every non-stationary mode decays
 geometrically. In any matrix norm consistent with the spectral structure,
 
 $$
-\boxed{\; \|P^n - \mathbf{1}\pi\| \;\leq\; C \cdot |\lambda_2|^n \;}
+\boxed{  \|P^n - \mathbf{1}\pi\|  \leq  C \cdot |\lambda_2|^n  }
 $$
 
 for a constant $C$ depending on the eigenbasis (and on the choice of norm).
@@ -185,7 +185,7 @@ modulus.
 The **spectral gap** is
 
 $$
-\gamma \;=\; 1 - |\lambda_2| \;\in\; (0, 1].
+\gamma  =  1 - |\lambda_2|  \in  (0, 1].
 $$
 
 A small gap (close to 0) means slow mixing; a large gap (close to 1) means
@@ -194,13 +194,13 @@ fast mixing.
 The **total variation distance** at step $n$ from a starting state $i$ is
 
 $$
-d_i(n) \;=\; \tfrac{1}{2} \sum_{j \in S} \left| p_{ij}^{(n)} - \pi_j \right|.
+d_i(n)  =  \tfrac{1}{2} \sum_{j \in S} \left| p_{ij}^{(n)} - \pi_j \right|.
 $$
 
 The **mixing time** at tolerance $\varepsilon$ is
 
 $$
-t_{\mathrm{mix}}(\varepsilon) \;=\; \min\!\left\{ n : \max_{i \in S} d_i(n) \leq \varepsilon \right\}.
+t_{\mathrm{mix}}(\varepsilon)  =  \min\!\left\{ n : \max_{i \in S} d_i(n) \leq \varepsilon \right\}.
 $$
 
 The standard convention is $\varepsilon = 1/4$ (Levin–Peres–Wilmer); with that
@@ -251,8 +251,8 @@ $\pi_E = 0.14 \, \pi_J$.
 Imposing normalisation:
 
 $$
-\pi_J \left( 1 + \tfrac{3}{4} + \tfrac{3}{2} + 0.14 \right) \;=\; \pi_J \cdot 3.39 \;=\; 1
-\;\implies\; \pi_J \approx 0.2950.
+\pi_J \left( 1 + \tfrac{3}{4} + \tfrac{3}{2} + 0.14 \right)  =  \pi_J \cdot 3.39  =  1
+ \implies  \pi_J \approx 0.2950.
 $$
 
 | State | $\pi_i$ (analytical) | Interpretation |

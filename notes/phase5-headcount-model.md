@@ -26,7 +26,7 @@ total size by the CTMC. The expected number of people at career level $k$ at
 time $t$ is therefore
 
 $$
-\mathbb{E}[N_k(t)] \;\approx\; \mathbb{E}[n(t)] \cdot \pi_t(k),
+\mathbb{E}[N_k(t)]  \approx  \mathbb{E}[n(t)] \cdot \pi_t(k),
 $$
 
 where $\pi_t = \pi_0 P^{\lfloor t \rfloor}$ is the time-$t$ DTMC distribution
@@ -78,7 +78,7 @@ $\lambda$ such that the asymptote $\rho$ accommodates the target: with
 $\mu = 0.025$ and target 60 by month 12,
 
 $$
-60 \;=\; \rho + (45 - \rho) e^{-0.3} \;\Longrightarrow\; \rho \;\approx\; 92.4 \;\Longrightarrow\; \lambda \;\approx\; 2.31\ \text{hires/month}.
+60  =  \rho + (45 - \rho) e^{-0.3}  \Longrightarrow  \rho  \approx  92.4  \Longrightarrow  \lambda  \approx  2.31\ \text{hires/month}.
 $$
 
 A 16% increase in hiring rate is needed. The probability metric:
@@ -92,7 +92,7 @@ $\lambda = 2.31$.
 Set $\lambda = 0$. The mean trajectory becomes pure exponential decay:
 
 $$
-\mathbb{E}[n(t)] \;=\; n_0 \, e^{-\mu t}.
+\mathbb{E}[n(t)]  =  n_0 \, e^{-\mu t}.
 $$
 
 Solving $45 \, e^{-0.025 t} = 40$ gives $t = -\ln(40/45)/0.025 \approx 4.7$
@@ -111,7 +111,7 @@ the team-size distribution has a long right tail.
 Reset $n_0 = 35$ with the original $\lambda, \mu$. The mean reaches 45 when
 
 $$
-80 - 45 e^{-0.025 t} \;=\; 45 \;\Longrightarrow\; t \;=\; \frac{\ln(45/35)}{0.025} \;\approx\; 10.0\ \text{months}.
+80 - 45 e^{-0.025 t}  =  45  \Longrightarrow  t  =  \frac{\ln(45/35)}{0.025}  \approx  10.0\ \text{months}.
 $$
 
 Recovery is faster than the half-life back to steady state because the
@@ -144,7 +144,7 @@ Let $\lambda(t)$ be a piecewise-constant step function: 3.0 in Q1 and Q3,
 by composing piecewise matrix exponentials:
 
 $$
-P(s \to t) \;=\; \exp\!\left[ Q\bigl(\lambda_{\text{quarter}(s)}\bigr) (t - s) \right].
+P(s \to t)  =  \exp\!\left[ Q\bigl(\lambda_{\text{quarter}(s)}\bigr) (t - s) \right].
 $$
 
 The annual mean is unaffected (linearity of expectation), but the **transient
@@ -203,11 +203,11 @@ over 12 months is $C = 12 \sum_{i=1}^{N} S_i$ (stochastic in both $N$ and $S$).
 By the laws of total expectation/variance:
 
 $$
-\mathbb{E}[C] \;=\; 12 \cdot \mathbb{E}[N] \cdot m,
+\mathbb{E}[C]  =  12 \cdot \mathbb{E}[N] \cdot m,
 $$
 
 $$
-\mathrm{Var}[C] \;=\; 144 \, \bigl( \mathbb{E}[N]^2 \, v + m^2 \, \mathrm{Var}[N] + \mathrm{Var}[N] \cdot v \bigr).
+\mathrm{Var}[C]  =  144 \, \bigl( \mathbb{E}[N]^2 \, v + m^2 \, \mathrm{Var}[N] + \mathrm{Var}[N] \cdot v \bigr).
 $$
 
 Numerical example: at month 12 with $n_0 = 45$, $\mathbb{E}[N] \approx 54$
@@ -217,12 +217,12 @@ fitted distribution — $m \approx \exp(9.2 + 0.045) \approx 10\,432$ and
 $v \approx m^2 (e^{0.09} - 1) \approx 1.02 \times 10^7$.
 
 $$
-\mathbb{E}[C] \;\approx\; 12 \cdot 54 \cdot 10\,432 \;\approx\; 6.76\,\mathrm{M}.
+\mathbb{E}[C]  \approx  12 \cdot 54 \cdot 10\,432  \approx  6.76\,\mathrm{M}.
 $$
 
 $$
-\mathrm{Var}[C] \;\approx\; 144 \, (54^2 \cdot 1.02 \times 10^7 + 10\,432^2 \cdot 35 + \cdots)
-\;\Longrightarrow\; \mathrm{sd}(C) \;\approx\; 0.86\,\mathrm{M}.
+\mathrm{Var}[C]  \approx  144 \, (54^2 \cdot 1.02 \times 10^7 + 10\,432^2 \cdot 35 + \cdots)
+ \Longrightarrow  \mathrm{sd}(C)  \approx  0.86\,\mathrm{M}.
 $$
 
 So the closed form gives $C \approx 6.76 \pm 0.86$ M (1 SD) without
