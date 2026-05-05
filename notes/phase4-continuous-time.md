@@ -19,8 +19,8 @@ $0 \leq s_1 < \cdots < s_k < s$ and states $i_1, \ldots, i_k, i, j$,
 
 $$
 P(X_{s+t} = j \mid X_s = i, X_{s_k} = i_k, \ldots, X_{s_1} = i_1)
-\;=\; P(X_{s+t} = j \mid X_s = i)
-\;=\; p_{ij}(t),
+ =  P(X_{s+t} = j \mid X_s = i)
+ =  p_{ij}(t),
 $$
 
 where $p_{ij}(t)$ depends only on the elapsed time $t$. The function
@@ -37,7 +37,7 @@ Two structural facts are immediate:
 Assume $P(t)$ is differentiable at $t = 0$. The **generator** is
 
 $$
-Q \;=\; P'(0) \;=\; \lim_{h \downarrow 0} \frac{P(h) - I}{h}.
+Q  =  P'(0)  =  \lim_{h \downarrow 0} \frac{P(h) - I}{h}.
 $$
 
 For $i \neq j$, $Q_{ij}$ is the **rate** at which the chain transitions from
@@ -53,7 +53,7 @@ The diagonal entry $-Q_{ii}$ is the **total rate of leaving** state $i$.
 **Proof.** Differentiate $P(t) \mathbf{1} = \mathbf{1}$ at $t = 0$:
 
 $$
-0 \;=\; \frac{d}{dt} P(t) \mathbf{1} \,\Big|_{t=0} \;=\; P'(0) \mathbf{1} \;=\; Q \mathbf{1}. \quad\blacksquare
+0  =  \frac{d}{dt} P(t) \mathbf{1} \,\Big|_{t=0}  =  P'(0) \mathbf{1}  =  Q \mathbf{1}. \quad\blacksquare
 $$
 
 So a generator $Q$ satisfies:
@@ -81,19 +81,19 @@ The matrix-valued ODE that governs $P(t)$.
 **Claim.** For all $t \geq 0$, $P(t)$ satisfies the **forward Kolmogorov equation**
 
 $$
-\frac{d}{dt} P(t) \;=\; P(t) \, Q.
+\frac{d}{dt} P(t)  =  P(t) \, Q.
 $$
 
 **Proof.** Apply Chapman–Kolmogorov at $s = t$, $u = h$:
 
 $$
-P(t + h) - P(t) \;=\; P(t) P(h) - P(t) \;=\; P(t) [P(h) - I].
+P(t + h) - P(t)  =  P(t) P(h) - P(t)  =  P(t) [P(h) - I].
 $$
 
 Divide by $h$ and let $h \downarrow 0$, using $P(h) = I + Qh + o(h)$:
 
 $$
-\frac{P(t + h) - P(t)}{h} \;\to\; P(t) Q. \quad\blacksquare
+\frac{P(t + h) - P(t)}{h}  \to  P(t) Q. \quad\blacksquare
 $$
 
 ### 2.2 The backward equation
@@ -101,7 +101,7 @@ $$
 By analogous reasoning (decompose $P(t+h) = P(h) P(t)$),
 
 $$
-\frac{d}{dt} P(t) \;=\; Q \, P(t).
+\frac{d}{dt} P(t)  =  Q \, P(t).
 $$
 
 **Same equation, different reading.** The forward form is "given the chain
@@ -117,7 +117,7 @@ are not automatic in the infinite case but coincide for finite $S$.
 Kolmogorov equation is
 
 $$
-P(t) \;=\; e^{Qt} \;=\; \sum_{k=0}^{\infty} \frac{(Qt)^k}{k!}.
+P(t)  =  e^{Qt}  =  \sum_{k=0}^{\infty} \frac{(Qt)^k}{k!}.
 $$
 
 **Proof.** The series converges absolutely on every compact interval (since
@@ -125,10 +125,10 @@ $Q$ is bounded for finite $S$). Differentiating term-by-term,
 
 $$
 \frac{d}{dt} e^{Qt}
-\;=\; \sum_{k=1}^\infty \frac{k \, Q^k t^{k-1}}{k!}
-\;=\; Q \cdot \sum_{k=0}^\infty \frac{(Qt)^k}{k!}
-\;=\; Q \, e^{Qt}
-\;=\; e^{Qt} \, Q,
+ =  \sum_{k=1}^\infty \frac{k \, Q^k t^{k-1}}{k!}
+ =  Q \cdot \sum_{k=0}^\infty \frac{(Qt)^k}{k!}
+ =  Q \, e^{Qt}
+ =  e^{Qt} \, Q,
 $$
 
 where the last equality uses $Q$ commutes with its powers. So $e^{Qt}$ solves
@@ -144,7 +144,7 @@ state spaces.
 A row vector $\pi$ is **stationary** for the CTMC if
 
 $$
-\pi \, Q \;=\; 0, \qquad \pi_i \geq 0, \qquad \sum_i \pi_i \;=\; 1.
+\pi \, Q  =  0, \qquad \pi_i \geq 0, \qquad \sum_i \pi_i  =  1.
 $$
 
 Equivalently, $\pi e^{Qt} = \pi$ for all $t$ — once started in $\pi$, the
@@ -166,7 +166,7 @@ transitions go only to neighbouring states. Concretely, given $X_t = n$:
 The generator is tridiagonal:
 
 $$
-Q \;=\;
+Q  = 
 \begin{pmatrix}
 -\lambda_0 & \lambda_0 & 0 & 0 & \cdots \\
 \mu_1 & -(\lambda_1 + \mu_1) & \lambda_1 & 0 & \cdots \\
@@ -183,20 +183,20 @@ $$
 **Claim.** A stationary distribution $\pi$ of a birth-death process satisfies
 
 $$
-\pi_n \, \lambda_n \;=\; \pi_{n+1} \, \mu_{n+1} \qquad \text{for all } n \geq 0.
+\pi_n \, \lambda_n  =  \pi_{n+1} \, \mu_{n+1} \qquad \text{for all } n \geq 0.
 $$
 
 **Proof.** Write out $\pi Q = 0$ component-wise. The $n$-th equation
 ($n \geq 1$) is
 
 $$
-\pi_{n-1} \lambda_{n-1} - \pi_n (\lambda_n + \mu_n) + \pi_{n+1} \mu_{n+1} \;=\; 0.
+\pi_{n-1} \lambda_{n-1} - \pi_n (\lambda_n + \mu_n) + \pi_{n+1} \mu_{n+1}  =  0.
 $$
 
 Rearrange:
 
 $$
-\bigl( \pi_{n+1} \mu_{n+1} - \pi_n \lambda_n \bigr) - \bigl( \pi_n \mu_n - \pi_{n-1} \lambda_{n-1} \bigr) \;=\; 0.
+\bigl( \pi_{n+1} \mu_{n+1} - \pi_n \lambda_n \bigr) - \bigl( \pi_n \mu_n - \pi_{n-1} \lambda_{n-1} \bigr)  =  0.
 $$
 
 So the quantity $J_n = \pi_n \lambda_n - \pi_{n+1} \mu_{n+1}$ is constant in
@@ -213,15 +213,15 @@ rate of deaths into $n$.
 From $\pi_{n+1} = (\lambda_n / \mu_{n+1}) \, \pi_n$, by induction:
 
 $$
-\boxed{ \;
-\pi_n \;=\; \pi_0 \cdot \prod_{k=0}^{n-1} \frac{\lambda_k}{\mu_{k+1}}
-\; }
+\boxed{  
+\pi_n  =  \pi_0 \cdot \prod_{k=0}^{n-1} \frac{\lambda_k}{\mu_{k+1}}
+  }
 $$
 
 The constant $\pi_0$ is fixed by the normalisation $\sum_{n \geq 0} \pi_n = 1$:
 
 $$
-\pi_0 \;=\; \left( 1 + \sum_{n = 1}^{\infty} \prod_{k=0}^{n-1} \frac{\lambda_k}{\mu_{k+1}} \right)^{-1}.
+\pi_0  =  \left( 1 + \sum_{n = 1}^{\infty} \prod_{k=0}^{n-1} \frac{\lambda_k}{\mu_{k+1}} \right)^{-1}.
 $$
 
 The chain is **positive recurrent** (a stationary distribution exists) iff
@@ -233,7 +233,7 @@ A specially clean case: $\lambda_n = \lambda$ (constant hiring rate) and
 $\mu_n = n \mu$ (per-capita attrition with rate $\mu$ each). Then
 
 $$
-\prod_{k=0}^{n-1} \frac{\lambda_k}{\mu_{k+1}} \;=\; \prod_{k=0}^{n-1} \frac{\lambda}{(k+1)\mu} \;=\; \frac{\lambda^n}{n! \, \mu^n} \;=\; \frac{\rho^n}{n!}, \qquad \rho := \frac{\lambda}{\mu}.
+\prod_{k=0}^{n-1} \frac{\lambda_k}{\mu_{k+1}}  =  \prod_{k=0}^{n-1} \frac{\lambda}{(k+1)\mu}  =  \frac{\lambda^n}{n! \, \mu^n}  =  \frac{\rho^n}{n!}, \qquad \rho := \frac{\lambda}{\mu}.
 $$
 
 So $\pi_n = \pi_0 \cdot \rho^n / n!$. Normalisation gives
@@ -241,7 +241,7 @@ $\pi_0 \sum_{n \geq 0} \rho^n / n! = \pi_0 e^\rho = 1$, hence $\pi_0 = e^{-\rho}
 and
 
 $$
-\boxed{\; \pi_n \;=\; e^{-\rho} \, \frac{\rho^n}{n!} \;\sim\; \mathrm{Poisson}(\rho). \;}
+\boxed{  \pi_n  =  e^{-\rho} \, \frac{\rho^n}{n!}  \sim  \mathrm{Poisson}(\rho).  }
 $$
 
 **Headcount interpretation.** Constant hiring at rate $\lambda$ per month and
@@ -257,13 +257,13 @@ risks reduces variance.
 Take expectations on both sides of the rate equation:
 
 $$
-\frac{d}{dt} \mathbb{E}[X_t] \;=\; \lambda - \mu \, \mathbb{E}[X_t].
+\frac{d}{dt} \mathbb{E}[X_t]  =  \lambda - \mu \, \mathbb{E}[X_t].
 $$
 
 Solving with initial condition $\mathbb{E}[X_0] = n_0$:
 
 $$
-\boxed{\; \mathbb{E}[X_t] \;=\; \rho + (n_0 - \rho) \, e^{-\mu t}. \;}
+\boxed{  \mathbb{E}[X_t]  =  \rho + (n_0 - \rho) \, e^{-\mu t}.  }
 $$
 
 The trajectory exponentially relaxes to the steady-state mean $\rho$ with
@@ -300,7 +300,7 @@ A 95% interval is roughly $[63, 98]$.
 With $n_0 = 45$:
 
 $$
-\mathbb{E}[X_t] \;=\; 80 + (45 - 80) \, e^{-0.025 t} \;=\; 80 - 35 \, e^{-0.025 t}.
+\mathbb{E}[X_t]  =  80 + (45 - 80) \, e^{-0.025 t}  =  80 - 35 \, e^{-0.025 t}.
 $$
 
 | $t$ (months) | $\mathbb{E}[X_t]$ |
@@ -322,7 +322,7 @@ $\{0, 1, \ldots, N\}$ for some large $N$ (e.g. $N = 200$), compute
 $P(t) = e^{Qt}$, and read off
 
 $$
-P(X_{12} \geq 50 \mid X_0 = 45) \;=\; \sum_{j \geq 50} (e^{Qt})_{45, j}.
+P(X_{12} \geq 50 \mid X_0 = 45)  =  \sum_{j \geq 50} (e^{Qt})_{45, j}.
 $$
 
 The implementation in `src/ctmc.py` does exactly this. Numerically (with
@@ -337,13 +337,13 @@ A CTMC with bounded rates can be related to a DTMC via **uniformization**:
 choose $\nu \geq \max_i (-Q_{ii})$ and define
 
 $$
-\tilde{P} \;=\; I + \frac{1}{\nu} Q.
+\tilde{P}  =  I + \frac{1}{\nu} Q.
 $$
 
 Then $\tilde{P}$ is row-stochastic, and
 
 $$
-e^{Qt} \;=\; e^{-\nu t} \sum_{k \geq 0} \frac{(\nu t)^k}{k!} \, \tilde{P}^k.
+e^{Qt}  =  e^{-\nu t} \sum_{k \geq 0} \frac{(\nu t)^k}{k!} \, \tilde{P}^k.
 $$
 
 The CTMC at time $t$ equals the DTMC $\tilde{P}$ run for a $\mathrm{Poisson}(\nu t)$

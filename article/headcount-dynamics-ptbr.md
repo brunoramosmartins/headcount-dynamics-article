@@ -24,6 +24,18 @@ funcionários podem sair, ser promovidos ou contratados. O número de
 pessoas no time daqui a doze meses é uma variável aleatória com uma
 distribuição, não um valor único.
 
+A consequência financeira é direta. Numa organização de TI, salários
+mais os custos por cabeça que seguem cada funcionário — licenças de
+software, cota de provisionamento de cloud, equipamentos, orçamento de
+treinamento — são de longe a maior parcela do orçamento operacional.
+Quando o headcount é incerto, *o orçamento é incerto*: um erro de 10%
+no tamanho médio do time vira um erro de 10% na linha que financia
+folha e oscilação semelhante em tudo que escala por cabeça. A maioria
+dos planos de pessoal assume implicitamente variância zero — declara um
+número e segue. Este artigo mostra que a variância não só não é zero,
+ela é calculável; e uma vez conhecido o seu formato, dá para planejar
+contra ela em vez de fingir que não existe.
+
 Uma vez que o headcount é reconhecido como um processo aleatório, três
 perguntas tornam-se quantificáveis — perguntas que o plano determinístico
 não consegue responder:
@@ -35,41 +47,97 @@ não consegue responder:
    alvo é o *tempo de hitting* de uma cadeia de Markov, computável a
    partir da matriz de transição.
 3. **Qual é a probabilidade de atingir o plano?** $P(n_{12} \geq 50)$ é
-   uma fórmula de uma linha, dada a especificação da cadeia.
+   uma fórmula de uma linha, dada a especificação da cadeia, e a Seção 6
+   mostra o que move esse número.
 
-A matemática é madura. Cadeias de Markov em tempo discreto remontam ao
-artigo original de Markov de 1906. Cadeias em tempo contínuo e a
+Este artigo conversa diretamente com *Simulação de Orçamento por Monte
+Carlo* — o artigo anterior. Lá, o orçamento total era simulado **dado** um
+headcount fixo. Aqui, mostramos como o próprio headcount evolui ao longo
+do tempo, e na Seção 8 fechamos o laço: a distribuição de tamanho do time
+gerada por este artigo alimenta a simulação de orçamento do anterior. As
+duas peças cobrem o problema completo de planejar custo de pessoal sob
+incerteza.
+
+A matemática usada é madura. Cadeias de Markov em tempo discreto remontam
+ao artigo original de Markov de 1906. Cadeias em tempo contínuo e a
 especialização nascimento-morte, que modelam fluxos contínuos de
 contratação e atrição, são material clássico de pesquisa operacional e
-teoria de filas. O que este artigo faz é *aplicar* esse aparato de ponta
-a ponta a um problema de planejamento de pessoal e conectar as quantidades
-analíticas resultantes à simulação de Monte Carlo de orçamento do Artigo 1
-desta trilogia.
+teoria de filas. O que fazemos aqui é *aplicar* esse aparato de ponta a
+ponta a um problema concreto de planejamento de pessoal — sem deixar
+nenhuma derivação implícita pelo caminho.
 
-O argumento se desdobra em três camadas. As três primeiras seções
-introduzem cadeias de Markov em tempo discreto: a matriz de transição $P$,
-a equação de Chapman–Kolmogorov e a distribuição estacionária $\pi$. A
-quarta seção adiciona análise de absorção — a *matriz fundamental*
-$N = (I - Q)^{-1}$ — que responde perguntas como "quanto tempo até o time
-estar vazio sob um congelamento de contratações?". A quinta seção avança
-para tempo contínuo: o gerador $Q$, a exponencial matricial
-$P(t) = e^{Qt}$ e processos nascimento-morte, que produzem distribuições
-de tamanho de time Poisson em forma fechada. A sexta seção reúne tudo num
-`HeadcountModel` aplicado e roda cinco cenários realistas. A sétima valida
-empiricamente cada afirmação teórica. A oitava conecta a distribuição de
-headcount à distribuição de orçamento do Artigo 1, completando a trilogia.
-A nona oferece um framework de quatro passos para um planejador que queira
-começar a usar essas ferramentas. A décima conclui.
+O argumento se desdobra em três camadas. **Primeiro**, as Seções 2 e 3
+introduzem o objeto matemático principal — a cadeia de Markov em tempo
+discreto — e respondem à pergunta "onde o time vai parar no longo prazo?"
+via a distribuição estacionária. **Segundo**, a Seção 4 adiciona a
+análise de absorção (a matriz fundamental $N = (I - Q)^{-1}$), que
+responde perguntas do tipo "quanto tempo até o time estar vazio sob um
+congelamento de contratações?". **Terceiro**, a Seção 5 troca os meses
+discretos por tempo contínuo e introduz processos nascimento-morte, que
+fornecem uma distribuição Poisson em forma fechada para o tamanho do
+time. As Seções 6 e 7 reúnem tudo num modelo aplicado, rodam cinco
+cenários realistas e validam cada afirmação teórica empiricamente. A
+Seção 8 faz a ponte com o artigo anterior. As Seções 9 e 10 oferecem um
+framework prático e a conclusão.
 
-Um leitor confortável com álgebra linear e probabilidade elementar achará
-o artigo autossuficiente. Cada teorema enunciado é demonstrado ou
-esboçado, cada exemplo numérico é reprodutível pelo código no repositório
-companheiro, e cada figura é gerada por um script versionado com seed
+### O que você precisa saber para ler este artigo
+
+Este é um artigo técnico, mas tenta exigir o mínimo necessário.
+Concretamente:
+
+**Pré-requisitos.** Álgebra linear no nível de autovalores e autovetores,
+multiplicação matricial e inversa. Probabilidade elementar: variáveis
+aleatórias, esperança, variância, probabilidade condicional. Conforto com
+a lei da expectativa total. Nenhuma teoria da medida, nenhuma análise
+funcional.
+
+**Tratado como caixa preta.** Alguns resultados clássicos são enunciados
+e usados sem prova completa, com referências para o leitor curioso:
+
+- O **teorema de Perron–Frobenius** para matrizes não-negativas (Seção
+  3). Usamos as conclusões — autovalor dominante simples, vetor
+  estacionário positivo — sem reprovar.
+- A **lei da variância total**
+  $\mathrm{Var}[X] = \mathbb{E}[\mathrm{Var}[X \mid Y]] + \mathrm{Var}[\mathbb{E}[X \mid Y]]$
+  (Seção 8). Aplicada diretamente, com citação.
+- **Picard–Lindelöf** para EDOs matriciais (Seção 5). Usado para
+  afirmar a unicidade de $P(t) = e^{Qt}$.
+
+**Fora do escopo.** O artigo não cobre processos semi-Markov, modelos
+ocultos de Markov, redes de filas além de uma única cadeia
+nascimento-morte, MCMC, ou ajuste de modelo a partir de dados reais de
+RH. O foco está na maquinaria de modelagem e análise; a estimação
+empírica das taxas a partir de dados de RH é mencionada na Seção 9 mas
+não desenvolvida.
+
+Um leitor confortável com os pré-requisitos achará todo o resto derivado
+em detalhe. Cada exemplo numérico é reprodutível pelo repositório
+companheiro, e cada figura é gerada por script versionado com seed
 aleatória fixa.
 
 ---
 
 ## 2. Cadeias de Markov — A Linguagem das Transições
+
+Antes da formalização, vale construir a intuição. Imagine um único
+funcionário e acompanhe-o mês a mês. Em cada mês ele está em um de quatro
+estados — Júnior, Pleno, Sênior, ou já saiu da empresa. No início do mês
+seguinte, ele pode ter sido promovido, ter saído, ou ter continuado no
+mesmo estado. As probabilidades dessas transições dependem apenas de onde
+ele está *agora* — não de há quanto tempo ele está ali, nem por onde
+passou antes. Essa propriedade — "o passado é resumido pelo presente" —
+é o que torna o processo uma **cadeia de Markov**.
+
+A vantagem prática é enorme: para descrever todo o comportamento futuro
+do sistema, basta uma tabela de probabilidades de transição entre os
+estados. Sem memória longa, sem histórico individualizado. Esse modelo é
+mais simples do que a realidade (na prática, alguém com 5 anos de Júnior
+provavelmente sai mais que um Júnior recém-contratado), mas é
+suficientemente fiel para responder perguntas de planejamento, e é
+*tratável* em termos analíticos. O resto desta seção formaliza a ideia,
+e as Seções 3 e 4 mostram o que se ganha em troca.
+
+### Definição formal
 
 Uma cadeia de Markov em tempo discreto sobre um espaço de estados finito
 $S = \{1, \ldots, K\}$ é uma sequência de variáveis aleatórias
@@ -77,7 +145,7 @@ $\{X_n\}_{n \geq 0}$ tal que a probabilidade do próximo estado depende
 apenas do estado presente, não do histórico:
 
 $$
-P(X_{n+1} = j \mid X_n = i, X_{n-1}, \ldots, X_0) \;=\; P(X_{n+1} = j \mid X_n = i) \;=\; p_{ij}.
+P(X_{n+1} = j \mid X_n = i, X_{n-1}, \ldots, X_0)  =  P(X_{n+1} = j \mid X_n = i)  =  p_{ij}.
 $$
 
 Essa é a **propriedade markoviana** — o passado é resumido pelo presente.
@@ -86,7 +154,7 @@ linha de $P$ é uma distribuição de probabilidade sobre o próximo estado,
 de modo que
 
 $$
-\sum_{j \in S} p_{ij} \;=\; 1 \quad \text{para todo } i,
+\sum_{j \in S} p_{ij}  =  1 \quad \text{para todo } i,
 $$
 
 e $P$ é **estocástica por linhas**: cada linha soma 1.
@@ -129,7 +197,7 @@ $(i, j)$ de $P^n$. Para provar isso, condicione no estado intermediário
 no tempo $n$:
 
 $$
-p_{ij}^{(m+n)} \;=\; \sum_{k} p_{ik}^{(m)} \, p_{kj}^{(n)}.
+p_{ij}^{(m+n)}  =  \sum_{k} p_{ik}^{(m)} \, p_{kj}^{(n)}.
 $$
 
 Essa é a **equação de Chapman–Kolmogorov**, o conteúdo probabilístico da
@@ -155,6 +223,16 @@ Essa segunda variante é exatamente a que a Seção 4 precisa para analisar
 um congelamento de contratações. A primeira variante é a que a Seção 3
 precisa para analisar a composição do time no longo prazo.
 
+Antes de seguir, uma observação sobre o que esperar das próximas seções.
+Com a matriz $P$ na mão, conseguimos perguntar duas coisas que um plano
+determinístico não responde. A primeira: *se as taxas atuais persistirem,
+para que distribuição de pessoas o time converge?* — essa é a Seção 3,
+sobre distribuições estacionárias. A segunda: *quanto tempo um cenário
+extremo demora? quanto tempo um Júnior leva para chegar a Sênior, ou
+quanto tempo até o time esvaziar sob um congelamento?* — essa é a Seção
+4, sobre tempos de hitting e absorção. As duas respostas saem da mesma
+matriz $P$ via cálculos de álgebra linear.
+
 ---
 
 ## 3. Onde o Time Vai Se Estabilizar? — Distribuições Estacionárias
@@ -163,7 +241,7 @@ Um vetor-linha $\pi = (\pi_1, \ldots, \pi_K)$ é uma **distribuição
 estacionária** se satisfaz
 
 $$
-\pi P \;=\; \pi, \qquad \pi_i \geq 0, \qquad \sum_i \pi_i \;=\; 1.
+\pi P  =  \pi, \qquad \pi_i \geq 0, \qquad \sum_i \pi_i  =  1.
 $$
 
 Iniciada em $\pi$, a cadeia permanece em $\pi$ para sempre. A pergunta
@@ -176,7 +254,7 @@ Para uma cadeia de Markov finita irredutível, uma distribuição
 estacionária **sempre existe**. A demonstração usa a média de Cesàro
 
 $$
-\bar\pi_n \;=\; \frac{1}{n} \sum_{k=0}^{n-1} e_i P^k.
+\bar\pi_n  =  \frac{1}{n} \sum_{k=0}^{n-1} e_i P^k.
 $$
 
 Cada $\bar\pi_n$ pertence ao simplex de probabilidade, que é compacto.
@@ -201,19 +279,31 @@ O segundo autovalor $\lambda_2$ governa a taxa de convergência. Decomponha
 $P$ espectralmente:
 
 $$
-P^n \;=\; \mathbf{1}\pi + \sum_{k \geq 2} \lambda_k^n \, u_k v_k^\top.
+P^n  =  \mathbf{1}\pi + \sum_{k \geq 2} \lambda_k^n \, u_k v_k^\top.
 $$
 
 Como $|\lambda_k| < 1$ para $k \geq 2$, os termos não estacionários
 decaem geometricamente. Obtemos a cota
 
 $$
-\|P^n - \mathbf{1}\pi\| \;\leq\; C \cdot |\lambda_2|^n.
+\|P^n - \mathbf{1}\pi\|  \leq  C \cdot |\lambda_2|^n.
 $$
 
 O **gap espectral** $\gamma = 1 - |\lambda_2|$ é a inversa da escala de
 tempo do esquecimento. Um gap próximo de 1 significa que a cadeia mistura
 rápido; um gap próximo de 0 significa que a condição inicial persiste.
+
+**O que isso significa para planejamento de pessoal.** O gap espectral é
+*o único número* que diz quanto tempo o "longo prazo" realmente leva. Se
+$\gamma = 0{,}5$, a cadeia reduz pela metade sua distância de $\pi$ a
+cada dois meses. Se $\gamma = 0{,}01$, a cada $\sim 70$ meses. Para a
+maior parte das cadeias de força de trabalho realistas — taxas de
+promoção e atrição de poucos por cento ao mês — o gap é pequeno, e o
+longo prazo são *anos*, não trimestres. A implicação prática é
+desconfortável: a distribuição estacionária não é um destino alcançável
+dentro de um ciclo de planejamento. É uma bússola que mostra para onde
+suas taxas atuais estão apontando o time, ainda que o time não chegue
+lá no calendário do planejador.
 
 ### A distribuição estacionária do headcount
 
@@ -223,7 +313,7 @@ $\pi_S = \tfrac{3}{2} \pi_J$, a quarta dá $\pi_E = 0.14 \, \pi_J$.
 Normalizando,
 
 $$
-\pi \;\approx\; (0{,}295, \; 0{,}221, \; 0{,}443, \; 0{,}041).
+\pi  \approx  (0{,}295,   0{,}221,   0{,}443,   0{,}041).
 $$
 
 No longo prazo, um funcionário passa cerca de 30% dos meses como Júnior,
@@ -232,7 +322,7 @@ Sênior domina porque a taxa de atrição Sênior ($p_{34} = 0.01$) é a menor
 de todas as taxas — Sêniores permanecem.
 
 Os autovalores de $P$ são aproximadamente
-$\{1{,}00, \; 0{,}99, \; 0{,}94, \; 0{,}41\}$. O gap espectral é
+$\{1{,}00,   0{,}99,   0{,}94,   0{,}41\}$. O gap espectral é
 $\gamma \approx 0{,}01$, dando um tempo de mistura da ordem de
 $1/\gamma \approx 100$ meses. Empiricamente, a distância em variação
 total cai abaixo de $1/4$ em torno do mês 70. A composição "de longo
@@ -272,7 +362,7 @@ Ordene os estados de forma que os transientes venham primeiro e os
 absorvedores por último. A matriz de transição assume a **forma canônica**
 
 $$
-P \;=\; \begin{pmatrix} Q & R \\ 0 & I \end{pmatrix},
+P  =  \begin{pmatrix} Q & R \\ 0 & I \end{pmatrix},
 $$
 
 em que $Q$ é o bloco transiente-para-transiente, $R$ é o bloco
@@ -280,8 +370,8 @@ transiente-para-absorvedor, e o bloco absorvedor é simplesmente a
 identidade. Para a cadeia com Saída absorvedora,
 
 $$
-Q \;=\; \begin{pmatrix} 0.93 & 0.03 & 0 \\ 0 & 0.96 & 0.02 \\ 0 & 0 & 0.99 \end{pmatrix}, \qquad
-R \;=\; \begin{pmatrix} 0.04 \\ 0.02 \\ 0.01 \end{pmatrix}.
+Q  =  \begin{pmatrix} 0.93 & 0.03 & 0 \\ 0 & 0.96 & 0.02 \\ 0 & 0 & 0.99 \end{pmatrix}, \qquad
+R  =  \begin{pmatrix} 0.04 \\ 0.02 \\ 0.01 \end{pmatrix}.
 $$
 
 ### A matriz fundamental
@@ -291,7 +381,7 @@ quando $n \to \infty$. Isso implica $\rho(Q) < 1$, então $I - Q$ é
 invertível e
 
 $$
-N \;=\; (I - Q)^{-1} \;=\; \sum_{k=0}^\infty Q^k.
+N  =  (I - Q)^{-1}  =  \sum_{k=0}^\infty Q^k.
 $$
 
 A matriz $N$ é a **matriz fundamental**. Cada entrada tem uma
@@ -301,14 +391,14 @@ tempo esperado até a absorção a partir do estado $i$ é a soma de todas as
 visitas:
 
 $$
-t \;=\; N \mathbf{1}.
+t  =  N \mathbf{1}.
 $$
 
 Para a cadeia de headcount com Saída absorvedora, $N$ é triangular
 superior com entradas diagonais $1/0.07$, $1/0.04$, $1/0.01$, e
 
 $$
-t \;=\; \begin{pmatrix} 46{,}4 \\ 75{,}0 \\ 100{,}0 \end{pmatrix} \;\text{meses}.
+t  =  \begin{pmatrix} 46{,}4 \\ 75{,}0 \\ 100{,}0 \end{pmatrix}  \text{meses}.
 $$
 
 Um Júnior inicial espera cerca de 46 meses até a saída; um Sênior,
@@ -332,7 +422,7 @@ absorvedora, modifique a cadeia para que *tanto* Sênior quanto Saída
 sejam absorvedores, e leia a coluna relevante de $B$. O resultado é
 
 $$
-P(\text{Júnior chega a Sênior eventualmente}) \;\approx\; 0{,}214.
+P(\text{Júnior chega a Sênior eventualmente})  \approx  0{,}214.
 $$
 
 Apenas um Júnior em cinco chega a Sênior sob as taxas padrão; o resto sai
@@ -345,7 +435,7 @@ Para uma cadeia irredutível (a variante com reciclagem), o tempo médio de
 estacionária:
 
 $$
-\mathbb{E}[T_i \mid X_0 = i] \;=\; \frac{1}{\pi_i}.
+\mathbb{E}[T_i \mid X_0 = i]  =  \frac{1}{\pi_i}.
 $$
 
 Essa é a ponte entre as Seções 3 e 4. A distribuição estacionária e os
@@ -377,14 +467,14 @@ As probabilidades de transição $P(t) = (p_{ij}(t))$ satisfazem a
 **equação de Kolmogorov forward**
 
 $$
-\frac{d}{dt} P(t) \;=\; P(t) \, Q,
+\frac{d}{dt} P(t)  =  P(t) \, Q,
 $$
 
 com condição inicial $P(0) = I$. A solução única é a exponencial
 matricial
 
 $$
-P(t) \;=\; e^{Qt} \;=\; \sum_{k = 0}^\infty \frac{(Qt)^k}{k!}.
+P(t)  =  e^{Qt}  =  \sum_{k = 0}^\infty \frac{(Qt)^k}{k!}.
 $$
 
 Numericamente, `scipy.linalg.expm` calcula $e^{Qt}$ via aproximação de
@@ -401,21 +491,21 @@ nascimento, uma demissão é uma morte.
 A distribuição estacionária satisfaz as equações de **balanço detalhado**
 
 $$
-\pi_n \, \lambda_n \;=\; \pi_{n+1} \, \mu_{n+1},
+\pi_n \, \lambda_n  =  \pi_{n+1} \, \mu_{n+1},
 $$
 
 — o fluxo de probabilidade de $n$ para $n+1$ é igual ao fluxo de volta.
 Resolvendo a recorrência obtemos
 
 $$
-\pi_n \;=\; \pi_0 \prod_{k = 0}^{n-1} \frac{\lambda_k}{\mu_{k+1}}.
+\pi_n  =  \pi_0 \prod_{k = 0}^{n-1} \frac{\lambda_k}{\mu_{k+1}}.
 $$
 
 Um caso especial particularmente limpo é **contratação constante com
 atrição per capita**: $\lambda_n = \lambda$ e $\mu_n = n\mu$. Então
 
 $$
-\pi_n \;=\; e^{-\rho} \frac{\rho^n}{n!}, \qquad \rho \;=\; \frac{\lambda}{\mu}.
+\pi_n  =  e^{-\rho} \frac{\rho^n}{n!}, \qquad \rho  =  \frac{\lambda}{\mu}.
 $$
 
 O tamanho do time é **Poisson** com média $\rho$. Contratação constante a
@@ -429,13 +519,13 @@ Tomando esperanças nos dois lados da equação de taxa do nascimento-morte,
 obtemos a EDO
 
 $$
-\frac{d}{dt} \mathbb{E}[X_t] \;=\; \lambda - \mu \mathbb{E}[X_t],
+\frac{d}{dt} \mathbb{E}[X_t]  =  \lambda - \mu \mathbb{E}[X_t],
 $$
 
 com solução fechada
 
 $$
-\mathbb{E}[X_t] \;=\; \rho + (n_0 - \rho) \, e^{-\mu t}.
+\mathbb{E}[X_t]  =  \rho + (n_0 - \rho) \, e^{-\mu t}.
 $$
 
 A média relaxa exponencialmente para a assíntota $\rho$ com meia-vida
@@ -449,7 +539,7 @@ capita $\mu = 0{,}025$, a média assintótica é $\rho = 80$. Começando de
 $n_0 = 45$,
 
 $$
-\mathbb{E}[X_{12}] \;\approx\; 54, \qquad P(X_{12} \geq 50 \mid X_0 = 45) \;\approx\; 0{,}80.
+\mathbb{E}[X_{12}]  \approx  54, \qquad P(X_{12} \geq 50 \mid X_0 = 45)  \approx  0{,}80.
 $$
 
 Há 20% de chance de terminar o ano abaixo de 50 — fato que a previsão
@@ -494,9 +584,37 @@ métodos:
 
 A composição (DTMC) e o tamanho do time (nascimento-morte) são tratados
 como processos independentes. Esse desacoplamento é uma simplificação
-deliberada: uma fila multiclasse seria mais precisa, mas perderia formas
-fechadas. A Seção 7 mostra que o viés da simplificação contra a verdade
-de Monte Carlo é pequeno.
+deliberada.
+
+**Quando a simplificação é segura.** Quando as taxas de atrição são
+parecidas entre níveis (Júnior, Pleno e Sênior), o tamanho do time
+depende do *fluxo total* de saída e fica bem aproximado pelo modelo
+nascimento-morte com um único $\mu$ per capita. A composição evolui
+sobre o tamanho sem realimentar o segundo de modo material. A Seção 7
+mostra que, para as taxas padrão, os dois processos batem com a
+verdade de Monte Carlo dentro do erro de amostragem.
+
+**Quando quebra.** Três regimes pedem um modelo mais refinado:
+
+1. **Atrição fortemente heterogênea.** Se a atrição Sênior fosse
+   $0{,}001$ e a Júnior $0{,}10$ (proporção 100×), tamanho do time e
+   composição passam a se acoplar via taxa de atrição ponderada pela
+   população, $\sum_i \pi_i \mu_i$. Fatorar como independentes
+   subestima a variância do tamanho total.
+2. **Restrições de capacidade.** Um orçamento de contratação atrelado à
+   receita (típico em empresas em crescimento) liga $\lambda$ de volta
+   à composição via hipóteses de produtividade. A simplificação ignora
+   esse loop.
+3. **Efeitos de coorte.** Recém-contratados saem a taxas mais altas que
+   funcionários veteranos nos primeiros seis meses. A propriedade
+   markoviana assume falta de memória — a cadeia *não consegue*
+   representar atrição dependente de tempo de casa sem expandir o
+   espaço de estados.
+
+Para os parâmetros padrão de time de TI usados aqui, o viés empírico é
+de cerca de 1–3% nos segundos momentos e desprezível nas médias. Uma
+implantação real deveria revalidar a hipótese contra simulação antes de
+confiar nas formas fechadas.
 
 ### Cenário S1 — Crescimento estável
 
@@ -673,13 +791,14 @@ comando.
 
 ---
 
-## 8. Conectando ao Orçamento — Artigos 1 e 2
+## 8. Conectando ao Orçamento — A Ponte com o Artigo Anterior
 
-O Artigo 1 desta trilogia simula o orçamento anual total amostrando
-headcount e salários conjuntamente. O Artigo 2 ajusta a distribuição de
-salários. O presente artigo dá a distribuição de headcount. Juntos
-formam um kit de ferramentas probabilístico para planejamento de
-orçamento de TI.
+O artigo anterior, *Simulação de Orçamento por Monte Carlo*, simula o
+orçamento anual total amostrando headcount e salários conjuntamente —
+mas tratando o headcount como um valor fixo dado de fora. O presente
+artigo fornece justamente o que faltava: a *distribuição* de headcount
+no horizonte de planejamento. Juntos, os dois cobrem o problema
+completo de planejar custo de pessoal sob incerteza.
 
 A ponte fechada usa as leis da expectativa total e da variância total.
 Seja $N$ = tamanho do time no mês 12 e $S_i$ = salários i.i.d. com
@@ -688,32 +807,31 @@ salários é $C = 12 \sum_{i=1}^N S_i$ — aleatório tanto em $N$ quanto em
 $S$. Então
 
 $$
-\mathbb{E}[C] \;=\; 12 \, \mathbb{E}[N] \, m,
+\mathbb{E}[C]  =  12 \, \mathbb{E}[N] \, m,
 $$
 
 $$
-\mathrm{Var}[C] \;=\; 144 \, \bigl( \mathbb{E}[N]^2 \, v + m^2 \, \mathrm{Var}[N] + \mathrm{Var}[N] \cdot v \bigr).
+\mathrm{Var}[C]  =  144 \, \bigl( \mathbb{E}[N]^2 \, v + m^2 \, \mathrm{Var}[N] + \mathrm{Var}[N] \cdot v \bigr).
 $$
 
 Exemplo numérico. Use a cadeia de headcount padrão ($n_0 = 45$,
-$\lambda = 2$, $\mu = 0{,}025$) e a distribuição de salários ajustada do
-Artigo 2 $S \sim \mathrm{LogNormal}(9{,}2,\, 0{,}30)$. Então
-$\mathbb{E}[N] \approx 54$ e $\mathrm{Var}[N] \approx 35$ no mês 12
-(calculados exatamente da CTMC truncada). Os momentos do salário são
-$m \approx 10\,432$ e $v \approx 1{,}02 \times 10^7$. Substituindo:
+$\lambda = 2$, $\mu = 0{,}025$) e uma distribuição de salários
+LogNormal($9{,}2,\, 0{,}30$). Então $\mathbb{E}[N] \approx 54$ e
+$\mathrm{Var}[N] \approx 35$ no mês 12 (calculados exatamente da CTMC
+truncada). Os momentos do salário são $m \approx 10\,432$ e
+$v \approx 1{,}02 \times 10^7$. Substituindo:
 
 $$
-\mathbb{E}[C] \;\approx\; 6{,}76 \,\mathrm{M}, \qquad \mathrm{sd}(C) \;\approx\; 0{,}86 \,\mathrm{M}.
+\mathbb{E}[C]  \approx  6{,}76 \,\mathrm{M}, \qquad \mathrm{sd}(C)  \approx  0{,}86 \,\mathrm{M}.
 $$
 
-Esses são os mesmos números que o Monte Carlo do Artigo 1 recupera dentro
-do erro de amostragem. A forma fechada é rápida e exata até a segunda
-ordem; o Artigo 1 é necessário para distribuições completas, percentis e
-probabilidades de cauda. Os três artigos compõem: o Artigo 2 fornece a
-distribuição de salário ($m, v$), o Artigo 3 fornece a distribuição de
-headcount ($\mathbb{E}[N], \mathrm{Var}[N]$), o Artigo 1 simula o objeto
-conjunto que inclui correlação entre funcionários e dependências
-intramês.
+Esses são os mesmos números que o Monte Carlo do artigo anterior recupera
+dentro do erro de amostragem. A forma fechada que derivamos aqui é rápida
+e exata até a segunda ordem; o Monte Carlo do artigo anterior é necessário
+para obter distribuições completas, percentis e probabilidades de cauda.
+Os dois artigos compõem: este aqui fornece a distribuição de headcount
+($\mathbb{E}[N], \mathrm{Var}[N]$), o anterior simula o objeto conjunto
+que inclui correlação entre funcionários e dependências intramês.
 
 ---
 
@@ -747,6 +865,24 @@ impacto sobre o resultado que importa para você. O resultado lhe diz
 qual alavanca puxar. Para a cadeia de headcount padrão, retenção Sênior é
 a alavanca dominante para a composição do time.
 
+**5. Conecte decisões a limiares.** É aqui que o kit deixa de ser
+descritivo e vira prescritivo. Para cada saída que importa, escreva o
+limiar e a ação disparada quando ele é cruzado:
+
+| Disparo | Limiar | Ação |
+|---------|--------|------|
+| $P(n_{12} \geq \text{alvo})$ cai | abaixo de 60% | liberar orçamento adicional de recrutamento; revisitar $\lambda$ |
+| Fração Sênior $\pi_S$ cai abaixo do piso | abaixo de 35% | abrir programa direcionado de retenção Sênior |
+| Limite de tempo de mistura excedido | $> 60$ meses | aceitar que a contratação do trimestre atual não move o estado estacionário; redirecionar para retenção |
+| Cenário de corte ativado | $n_0$ reduzido em $> 10\%$ | rodar S3 semanalmente; rebasear $\rho$ |
+
+Os limiares são decisões, não fatos — codificam a tolerância a risco do
+planejador. O modelo calcula as probabilidades; os limiares definem o
+que conta como "baixo demais". Uma vez escritos, o modelo deixa de
+produzir relatórios e passa a guiar a cadência operacional: cada
+atualização dos dados de RH dispara uma nova execução que ou confirma
+business-as-usual ou aciona uma intervenção específica.
+
 O processo todo cabe em um Jupyter notebook. O repositório companheiro
 tem templates para cada passo. Uma vez feito uma vez, o custo marginal
 de rodar outro cenário é zero — o ROI sobre um investimento único nesse
@@ -777,12 +913,38 @@ direção. Planejadores que tratam o estado estacionário como destino
 ficarão decepcionados; planejadores que o usam como bússola estarão
 calibrados.
 
-O artigo completa uma trilogia. O Artigo 2 escolheu distribuições; o
-Artigo 3 (este) modelou como o time muda; o Artigo 1 simulou o custo
-total. Juntos, convertem o planejamento de pessoal de uma série de
-suposições embasadas em um sistema probabilístico que pode ser
+Este artigo é o complemento natural de *Simulação de Orçamento por Monte
+Carlo*. Lá, o orçamento total foi simulado supondo um headcount conhecido;
+aqui, o próprio headcount foi modelado como o processo aleatório que ele
+de fato é. Juntos, os dois convertem o planejamento de pessoal de uma
+série de suposições embasadas em um sistema probabilístico que pode ser
 consultado, perturbado e auditado. O plano determinístico é uma
 estatística entre muitas. Já não é a resposta.
+
+### Três coisas para fazer na segunda-feira
+
+Para que o aparato descrito aqui aterrisse, ele precisa começar
+pequeno. Três passos concretos para o próximo ciclo de planejamento:
+
+1. **Estime as taxas.** Puxe os últimos 12 meses de dados de RH e
+   compute frações mensais de transição por nível de carreira. Está a
+   um `groupby` de distância na maioria dos exports de HRIS. A matriz
+   de transição $P$ resultante é o custo de entrada — todo o resto é
+   uma célula de Jupyter.
+2. **Resolva $\pi P = \pi$ e compare com a sua aspiração.** Se a
+   composição estacionária discorda do time que você diz querer
+   construir, as taxas são a alavanca — não o plano de contratação do
+   próximo trimestre. Esse único número reformula a conversa toda.
+3. **Escreva dois limiares.** Escolha o risco que mais importa para
+   você ($P(n_{12} \geq \text{alvo}) < 60\%$, ou Sênior abaixo de 35%,
+   ou entrada em cenário de corte), escolha a ação que ele dispara, e
+   coloque no documento de planejamento compartilhado. O *você* do
+   futuro vai rodar o modelo numa cadência; o *você* de hoje define o
+   que significa "baixo demais".
+
+Se os três passos estiverem em pé até segunda-feira que vem, o plano de
+pessoal já opera num regime diferente — um em que a incerteza é
+nomeada, precificada e monitorada.
 
 ---
 
@@ -798,9 +960,9 @@ estatística entre muitas. Já não é a resposta.
   Press, 11ª ed.
 - Taylor, H. M. & Karlin, S. (1998). *An Introduction to Stochastic
   Modeling*. Academic Press, 3ª ed.
-- Companheiros da trilogia: *Artigo 1 — Simulação de Orçamento por Monte
-  Carlo*; *Artigo 2 — Escolha de Distribuição para Componentes de Custo
-  de TI*.
+- Artigo anterior do autor: *Simulação de Orçamento por Monte Carlo*
+  (referenciado nas Seções 1, 8 e 10 e cuja simulação consome a
+  distribuição de headcount produzida aqui).
 
 ---
 

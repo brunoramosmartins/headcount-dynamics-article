@@ -20,10 +20,17 @@ Each file:
 - One-line takeaway
 - Tags: the phase, the math branch, the applied domain
 
-## Index (one per phase)
+## Index
+
+Two TILs are tied to Phase 1. The "plain-words" entry is a beginner-friendly
+overview of the Markov chain idea — useful as a first post for an audience
+unfamiliar with the topic. The "row-stochastic" entry digs into a single
+non-obvious technical detail. Pick whichever fits the audience of the
+moment, or run them as a two-post series.
 
 | Phase | TIL file                                               | Insight                                       |
 |-------|--------------------------------------------------------|-----------------------------------------------|
+| 1     | [til-phase-1-markov-chain-in-plain-words.md](til-phase-1-markov-chain-in-plain-words.md) | What a Markov chain *is*, in plain language  |
 | 1     | [til-phase-1-why-row-stochastic.md](til-phase-1-why-row-stochastic.md) | Why rows of $P$ sum to 1 (not columns)        |
 | 2     | [til-phase-2-spectral-gap-intuition.md](til-phase-2-spectral-gap-intuition.md) | Spectral gap = mixing speed                   |
 | 3     | [til-phase-3-fundamental-matrix.md](til-phase-3-fundamental-matrix.md) | $N = (I-Q)^{-1}$ counts visits, not steps     |

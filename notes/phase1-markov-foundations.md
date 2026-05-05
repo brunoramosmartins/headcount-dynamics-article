@@ -5,7 +5,7 @@
 Let $\{X_n\}_{n \geq 0}$ be a sequence of random variables taking values in a finite (or countable) state space $S = \{1, 2, \ldots, K\}$. The sequence is a **Markov chain** if, for every $n \geq 0$ and every $i_0, i_1, \ldots, i_{n+1} \in S$ such that $P(X_n = i_n, \ldots, X_0 = i_0) > 0$,
 
 $$
-P(X_{n+1} = j \mid X_n = i, X_{n-1} = i_{n-1}, \ldots, X_0 = i_0) \;=\; P(X_{n+1} = j \mid X_n = i) \;=\; p_{ij}.
+P(X_{n+1} = j \mid X_n = i, X_{n-1} = i_{n-1}, \ldots, X_0 = i_0)  =  P(X_{n+1} = j \mid X_n = i)  =  p_{ij}.
 $$
 
 The conditional distribution of the next state depends on the present state alone — the past adds no information beyond what $X_n$ already carries. The numbers $p_{ij}$ are the **one-step transition probabilities**, assembled into the **transition matrix**
@@ -23,7 +23,7 @@ Throughout this article the chain is assumed **time-homogeneous**: $p_{ij}$ does
 **Proof.** Non-negativity is immediate from the definition of probability. For each fixed $i$,
 
 $$
-\sum_{j \in S} p_{ij} \;=\; \sum_{j \in S} P(X_{n+1} = j \mid X_n = i) \;=\; P\!\left(\bigcup_{j \in S} \{X_{n+1} = j\} \,\Big|\, X_n = i\right) \;=\; 1,
+\sum_{j \in S} p_{ij}  =  \sum_{j \in S} P(X_{n+1} = j \mid X_n = i)  =  P\!\left(\bigcup_{j \in S} \{X_{n+1} = j\} \,\Big|\, X_n = i\right)  =  1,
 $$
 
 since the events $\{X_{n+1} = j\}$ for $j \in S$ form a partition of the sample space (the chain must be in some state at time $n+1$). $\blacksquare$
@@ -39,7 +39,7 @@ Equivalently, $P \mathbf{1} = \mathbf{1}$ where $\mathbf{1} = (1, \ldots, 1)^T$.
 The **$n$-step transition probability** is
 
 $$
-p_{ij}^{(n)} \;=\; P(X_n = j \mid X_0 = i).
+p_{ij}^{(n)}  =  P(X_n = j \mid X_0 = i).
 $$
 
 By convention $p_{ij}^{(0)} = \delta_{ij}$ (Kronecker delta) and $p_{ij}^{(1)} = p_{ij}$.
@@ -51,19 +51,19 @@ By convention $p_{ij}^{(0)} = \delta_{ij}$ (Kronecker delta) and $p_{ij}^{(1)} =
 **Proof (induction on $n$).** The base case $n = 0$ holds by convention. Assume $p_{ij}^{(n)} = (P^n)_{ij}$ for some $n \geq 0$. Conditioning on $X_n$,
 
 $$
-p_{ij}^{(n+1)} \;=\; P(X_{n+1} = j \mid X_0 = i) \;=\; \sum_{k \in S} P(X_{n+1} = j, X_n = k \mid X_0 = i).
+p_{ij}^{(n+1)}  =  P(X_{n+1} = j \mid X_0 = i)  =  \sum_{k \in S} P(X_{n+1} = j, X_n = k \mid X_0 = i).
 $$
 
 Apply the multiplication rule and the Markov property:
 
 $$
-P(X_{n+1} = j, X_n = k \mid X_0 = i) \;=\; P(X_{n+1} = j \mid X_n = k) \cdot P(X_n = k \mid X_0 = i) \;=\; p_{kj} \cdot p_{ik}^{(n)}.
+P(X_{n+1} = j, X_n = k \mid X_0 = i)  =  P(X_{n+1} = j \mid X_n = k) \cdot P(X_n = k \mid X_0 = i)  =  p_{kj} \cdot p_{ik}^{(n)}.
 $$
 
 Hence
 
 $$
-p_{ij}^{(n+1)} \;=\; \sum_{k \in S} p_{ik}^{(n)} \, p_{kj} \;=\; \sum_{k \in S} (P^n)_{ik} \, P_{kj} \;=\; (P^{n+1})_{ij}. \quad\blacksquare
+p_{ij}^{(n+1)}  =  \sum_{k \in S} p_{ik}^{(n)} \, p_{kj}  =  \sum_{k \in S} (P^n)_{ik} \, P_{kj}  =  (P^{n+1})_{ij}. \quad\blacksquare
 $$
 
 ### 2.3 Theorem (Chapman–Kolmogorov)
@@ -71,7 +71,7 @@ $$
 **Claim.** For every $m, n \geq 0$ and every $i, j \in S$,
 
 $$
-p_{ij}^{(m+n)} \;=\; \sum_{k \in S} p_{ik}^{(m)} \, p_{kj}^{(n)}.
+p_{ij}^{(m+n)}  =  \sum_{k \in S} p_{ik}^{(m)} \, p_{kj}^{(n)}.
 $$
 
 **Proof.** Conditioning on $X_m$, then applying the Markov property and time-homogeneity,
@@ -98,7 +98,7 @@ By induction, $(P^{n+1}) \mathbf{1} = P^n (P \mathbf{1}) = P^n \mathbf{1} = \mat
 If $\pi_n = (P(X_n = 1), \ldots, P(X_n = K))$ is the row vector of marginal probabilities at time $n$, then
 
 $$
-\pi_{n+1} \;=\; \pi_n \, P, \qquad \pi_n \;=\; \pi_0 \, P^n.
+\pi_{n+1}  =  \pi_n \, P, \qquad \pi_n  =  \pi_0 \, P^n.
 $$
 
 The distribution flows by **right multiplication by $P$**. This is the convention used throughout the article.
@@ -126,7 +126,7 @@ States $i$ and $j$ **communicate**, written $i \leftrightarrow j$, if both $i \t
 - **Transitivity.** Suppose $i \leftrightarrow j$ and $j \leftrightarrow k$. There exist $m_1, n_1 \geq 0$ with $p_{ij}^{(m_1)} > 0$ and $p_{ji}^{(n_1)} > 0$, and $m_2, n_2 \geq 0$ with $p_{jk}^{(m_2)} > 0$ and $p_{kj}^{(n_2)} > 0$. By Chapman–Kolmogorov,
 
   $$
-  p_{ik}^{(m_1 + m_2)} \;=\; \sum_{\ell} p_{i\ell}^{(m_1)} \, p_{\ell k}^{(m_2)} \;\geq\; p_{ij}^{(m_1)} \, p_{jk}^{(m_2)} \;>\; 0.
+  p_{ik}^{(m_1 + m_2)}  =  \sum_{\ell} p_{i\ell}^{(m_1)} \, p_{\ell k}^{(m_2)}  \geq  p_{ij}^{(m_1)} \, p_{jk}^{(m_2)}  >  0.
   $$
 
   Symmetrically $p_{ki}^{(n_2 + n_1)} \geq p_{kj}^{(n_2)} p_{ji}^{(n_1)} > 0$. Hence $i \leftrightarrow k$. $\blacksquare$
@@ -155,7 +155,7 @@ A state $i$ is **absorbing** if $p_{ii} = 1$, equivalently if $\{i\}$ is a commu
 The **period** of state $i$ is
 
 $$
-d(i) \;=\; \gcd\{n \geq 1 : p_{ii}^{(n)} > 0\}.
+d(i)  =  \gcd\{n \geq 1 : p_{ii}^{(n)} > 0\}.
 $$
 
 State $i$ is **aperiodic** if $d(i) = 1$, **periodic** otherwise. Periodicity is a class property: if $i \leftrightarrow j$ then $d(i) = d(j)$.
