@@ -8,18 +8,17 @@ tags: markov-chains, stochastic-processes, workforce-planning, budgeting
 
 # The Team That Replaces Itself
 
-## Headcount Dynamics and Turnover as Stochastic Processes — from Markov Chains to Birth-Death Models
-
-> A headcount plan that says "we will have 50 people by December" is a point
-> forecast of a stochastic process. It ignores the probability of actually
-> reaching that state, the expected time to get there, and the steady state
-> the system naturally tends toward. This article shows that Markov chain
-> theory provides exact answers to all three questions, and applies the tools
-> to a working IT-team model.
+> **What this is.** A headcount plan that says "we will have 50 people by December" is a point forecast of a stochastic process. It ignores the probability of actually reaching that state, the expected time to get there, and the steady state the system naturally tends toward. This article shows that Markov chain theory answers all three questions exactly, and applies the tools end-to-end to a working IT-team model — feeding the budget simulation of the companion article [Why Your Budget Never Hits the Exact Number](monte-carlo-budget.html).
+>
+> **What you should know before reading.** *Required:* linear algebra at the level of eigenvalues, matrix multiplication, and inverses; elementary probability (random variables, expectation, variance, conditional probability); comfort with the law of total expectation. No measure theory, no functional analysis. *Treated as a black box, with references:* the Perron–Frobenius theorem, the law of total variance, and Picard–Lindelöf for matrix ODEs. *Out of scope:* semi-Markov processes, hidden Markov models, queueing networks, MCMC, and fitting rates from real workforce data.
+>
+> **What you will take away.** A four-step process — define the chain, solve the steady state, solve the transient, run sensitivity — plus decision thresholds that turn the model from a report into an operating cadence.
+>
+> **Code.** Every figure and number is reproduced by versioned scripts with fixed seeds in the [companion repository](https://github.com/brunoramosmartins/headcount-dynamics-article).
 
 ---
 
-## 1. Introduction — Headcount Is a Stochastic Process
+## Headcount Is a Stochastic Process
 
 A workforce plan typically reads as a sequence of integers. *45 people in
 January. 50 in March. 60 by year-end.* The numbers feel concrete, but they
@@ -51,15 +50,17 @@ quantifiable that the deterministic plan cannot answer:
    is the *hitting time* of a Markov chain, computable from the transition
    matrix.
 3. **What is the probability of hitting the plan?** $P(n_{12} \geq 50)$ is a
-   one-line formula once the chain is specified, and Section 6 shows what
-   moves it.
+   one-line formula once the chain is specified, and
+   [The Headcount Model](#the-headcount-model) shows what moves it.
 
-This article speaks directly to the previous one, *Monte Carlo Budget
-Simulation*. There, the total annual budget was simulated **given** a fixed
+This article speaks directly to the companion,
+[Why Your Budget Never Hits the Exact Number](monte-carlo-budget.html).
+There, the total annual budget was simulated **given** a fixed
 headcount. Here, we model how headcount itself evolves over time, and
-Section 8 closes the loop: the team-size distribution produced here feeds
-the budget simulation of the previous article. Together, the two cover the
-full problem of planning a personnel budget under uncertainty.
+[The Bridge to the Budget](#the-bridge-to-the-budget) closes the loop: the
+team-size distribution produced here feeds the budget simulation of that
+article. Together, the two cover the full problem of planning a personnel
+budget under uncertainty.
 
 The mathematics used is mature. Markov chains in discrete time go back to
 Markov's original 1906 paper. Continuous-time chains and the birth-death
@@ -69,55 +70,23 @@ present article does is *apply* this apparatus end-to-end to a concrete
 workforce planning problem — without leaving any derivation implicit
 along the way.
 
-The argument unfolds in three layers. **First**, Sections 2 and 3
-introduce the main mathematical object — the discrete-time Markov chain —
-and answer "where does the team end up in the long run?" via the
-stationary distribution. **Second**, Section 4 adds absorption analysis
-(the fundamental matrix $N = (I - Q)^{-1}$), which answers questions like
+The argument unfolds in three layers. **First**,
+[Markov chains](#markov-chains) introduce the main mathematical object,
+and [Where Will the Team Settle?](#where-will-the-team-settle) answers the
+long-run question via the stationary distribution. **Second**,
+[How Long Will It Take?](#how-long-will-it-take) adds absorption analysis —
+the fundamental matrix $N = (I - Q)^{-1}$ — which answers questions like
 "how long until the team is empty under a hiring freeze?". **Third**,
-Section 5 swaps discrete months for continuous time and introduces
-birth-death processes, which give a closed-form Poisson distribution for
-team size. Sections 6 and 7 bring everything together in an applied model,
-run five realistic scenarios, and validate every theoretical claim
-empirically. Section 8 makes the bridge to the previous article. Sections
-9 and 10 offer a practical framework and the conclusion.
-
-### What you need to know to read this article
-
-This is a technical article, but it tries hard not to demand more than is
-strictly necessary. Concretely:
-
-**Assumed background.** Linear algebra at the level of eigenvalues and
-eigenvectors, matrix multiplication, and matrix inverses. Elementary
-probability: random variables, expectation, variance, conditional
-probability. Comfort with the law of total expectation. No measure theory,
-no functional analysis.
-
-**Treated as a black box.** A few classical results are stated and used
-without full proof, with references for the curious reader:
-
-- The **Perron–Frobenius theorem** for non-negative matrices (Section 3).
-  We use the conclusions — simple top eigenvalue, positive stationary
-  vector — without re-proving them.
-- The **law of total variance** $\mathrm{Var}[X] = \mathbb{E}[\mathrm{Var}[X \mid Y]] + \mathrm{Var}[\mathbb{E}[X \mid Y]]$
-  (Section 8). Applied directly with citation.
-- **Picard–Lindelöf** for matrix ODEs (Section 5). Used to claim
-  uniqueness of $P(t) = e^{Qt}$.
-
-**Out of scope.** The article does not cover semi-Markov processes,
-hidden Markov models, queueing networks beyond a single birth-death
-chain, MCMC, or model fitting from real workforce data. The focus is on
-the modelling and analytical machinery; the empirical estimation of rates
-from HR data is mentioned in Section 9 but not developed.
-
-A reader comfortable with the assumed background will find every other
-result derived in full. Every numerical example is reproducible from the
-companion repository, and every figure is generated by a versioned script
-with a fixed random seed.
+[Birth-Death Processes](#birth-death-processes) swap discrete months for
+continuous time and give a closed-form Poisson distribution for team size.
+[The Headcount Model](#the-headcount-model) brings everything together,
+runs five realistic scenarios, and the
+[experiments](#experiments-and-results) validate every theoretical claim
+empirically.
 
 ---
 
-## 2. Markov Chains — The Language of Transitions
+## Markov Chains
 
 Before formalising, build the intuition. Imagine a single employee and
 follow them month by month. In any given month they sit in one of four
@@ -134,8 +103,8 @@ states. No long memory, no individualised history. The model is simpler
 than reality (in practice, a five-year-tenure Junior probably leaves at a
 different rate than a freshly-hired one), but it is faithful enough for
 planning questions, and it is *analytically tractable*. The rest of this
-section formalises the idea, and Sections 3 and 4 show what tractability
-buys.
+section formalises the idea; the two sections that follow show what
+tractability buys.
 
 ### Formal definition
 
@@ -217,22 +186,19 @@ hiring is irreducible: from any career level, every other state is
 reachable. Cut the recycling rate to zero (set $p_{41} = 0$) and the chain
 becomes absorbing — Exit traps the dynamics.
 
-This second variant is exactly what Section 4 needs to analyse a hiring
-freeze. The first variant is what Section 3 needs to analyse the long-run
-team composition.
-
-A note on what to expect from the next sections. With the matrix $P$ in
-hand, we can ask two things a deterministic plan cannot answer. First,
-*if the current rates persist, what distribution does the team converge
-to?* — that is Section 3, on stationary distributions. Second, *how long
+The two variants split the work between the next two sections. With the
+matrix $P$ in hand, we can ask two things a deterministic plan cannot
+answer. First, *if the current rates persist, what distribution does the
+team converge to?* — that is the irreducible variant and
+[the stationary analysis](#where-will-the-team-settle). Second, *how long
 does an extreme scenario take? how long for a Junior to reach Senior, or
-how long until the team empties under a hiring freeze?* — that is
-Section 4, on hitting times and absorption. Both answers come from the
-same matrix $P$ via linear-algebra computations.
+how long until the team empties under a hiring freeze?* — that is the
+absorbing variant and [the hitting-time analysis](#how-long-will-it-take).
+Both answers come from the same matrix $P$ via linear-algebra computations.
 
 ---
 
-## 3. Where Will the Team Settle? — Stationary Distributions
+## Where Will the Team Settle?
 
 A row vector $\pi = (\pi_1, \ldots, \pi_K)$ is a **stationary
 distribution** if it satisfies
@@ -338,7 +304,7 @@ percent per month — and is the reason mixing takes years.
 
 ---
 
-## 4. How Long Will It Take? — Absorption and Hitting Times
+## How Long Will It Take?
 
 The stationary distribution describes where the chain ends up. It says
 nothing about how *transient* behaviour evolves — the trajectory before the
@@ -418,7 +384,7 @@ $$
 Only one Junior in five reaches Senior under the default rates; the rest
 exit first. For a starting Mid the figure is exactly $0.5$.
 
-### Bridge to Section 3: mean return times
+### Bridge to the stationary picture: mean return times
 
 For an irreducible chain (the recycling variant), the mean time to *return*
 to a state equals the reciprocal of its stationary probability:
@@ -427,15 +393,15 @@ $$
 \mathbb{E}[T_i \mid X_0 = i]  =  \frac{1}{\pi_i}.
 $$
 
-This is the bridge between Sections 3 and 4. The stationary distribution
-and the mean return times are the same data in two different languages.
-Recurrence (Section 3) and absorption (Section 4) are the two faces of the
+This is the bridge between the stationary and the transient analyses. The
+stationary distribution and the mean return times are the same data in two
+different languages. Recurrence and absorption are the two faces of the
 transient picture: a chain in equilibrium returns infinitely often; an
 absorbing chain leaves once and never comes back.
 
 ---
 
-## 5. Continuous Flow — Birth-Death Processes
+## Birth-Death Processes
 
 Months are an artefact of when we compute payroll. Hiring and attrition
 *happen* continuously: a resignation can land on the 14th, an offer can be
@@ -546,12 +512,12 @@ computed from the truncated CTMC's transient distribution at each $t$.
 
 ---
 
-## 6. The Headcount Model — Five Scenarios
+## The Headcount Model
 
-Sections 2–5 built the apparatus. This section applies it. We define a
-combined `HeadcountModel` that wraps a discrete-time chain (career-level
-composition) and a birth-death process (total team size), and run five
-scenarios that a real planner would face.
+The previous sections built the apparatus. This section applies it. We
+define a combined `HeadcountModel` that wraps a discrete-time chain
+(career-level composition) and a birth-death process (total team size),
+and run five scenarios that a real planner would face.
 
 ### The combined model
 
@@ -564,7 +530,7 @@ The `HeadcountModel` answers planning questions through six methods:
 | `expected_time_to_target(target)` | first $t$ with $\mathbb{E}[n(t)]$ at target |
 | `steady_state_composition()` | long-run % per career level |
 | `simulate_trajectories(...)` | Gillespie sample paths |
-| `expected_total_salary(...)` | budget bridge (Section 8) |
+| `expected_total_salary(...)` | budget bridge |
 
 The composition (DTMC) and the team size (birth-death) are treated as
 independent processes. This decoupling is a deliberate simplification.
@@ -573,8 +539,9 @@ independent processes. This decoupling is a deliberate simplification.
 similar across levels (Junior, Mid, and Senior), team size depends on the
 *total* outflow and is well-approximated by the birth-death model with a
 single per-capita $\mu$. Composition then evolves on top of size without
-materially feeding back. Section 7 shows that for the default rates the
-two processes track Monte Carlo ground truth within sampling error.
+materially feeding back. The [experiments](#experiments-and-results) show
+that for the default rates the two processes track Monte Carlo ground
+truth within sampling error.
 
 **When it breaks.** Three regimes deserve a more refined model:
 
@@ -678,81 +645,130 @@ investment for shaping team composition.
 
 ---
 
-## 7. Experiments and Results
+## Experiments and Results
 
-Each result in Sections 2–6 is an analytical claim. This section validates
-each one numerically against simulation. All experiments use a single fixed
-seed (2026) and a single style module (`scripts/_style.py`) to guarantee
-reproducibility.
+Each result in the preceding sections is an analytical claim. This section
+validates each one numerically against simulation, using the standard
+template — **Claim**, **Setup**, **Result**, **Connection**. All
+experiments use a single fixed seed (2026) and a single style module
+(`scripts/_style.py`) to guarantee reproducibility.
 
-### Experiment A — Convergence of $P^n$ to $\mathbf{1}\pi$
+### Experiment A — Convergence of $P^n$
 
-The convergence theorem says $P^n \to \mathbf{1}\pi$ as $n \to \infty$ for
-an irreducible aperiodic chain. The heatmap in Section 3 visualises this:
-each row of $P^n$ converges to $\pi$, with $P^{100}$ visually
-indistinguishable from the limit. Geometric decay at rate $|\lambda_2|^n$
-means each row halves its distance from $\pi$ every $\sim \ln 2 / \gamma
-\approx 70$ months.
+**Claim.** $P^n \to \mathbf{1}\pi$ geometrically for an irreducible
+aperiodic chain.
+
+**Setup.** Matrix powers $P^n$ computed at $n = 1, 5, 10, 50, 100$ and
+compared, row by row, against the rank-1 limit $\mathbf{1}\pi$.
+
+**Result.** Each row of $P^n$ approaches $\pi$; by $n = 100$ the rows are
+visually indistinguishable from the limit. Geometric decay at rate
+$|\lambda_2|^n$ means each row halves its distance from $\pi$ every
+$\sim \ln 2 / \gamma \approx 70$ months.
+
+**Connection.** The convergence theorem of
+[Where Will the Team Settle?](#where-will-the-team-settle) — the heatmap
+figure lives there.
 
 ### Experiment B — Spectral gap and mixing time
 
-The eigenvalue figure in Section 3 shows the spectrum sitting inside the
-unit disk. Numerically the spectral gap is $\gamma \approx 0.01$ and the
-empirical mixing time (the smallest $n$ such that $\max_i \tfrac{1}{2}\|P^n_{i,:} - \pi\|_1 \leq 1/4$)
-is approximately 70 months. The bound $t_{\mathrm{mix}} \leq (1/\gamma) \ln(1 / (\varepsilon \pi_{\min}))$
-predicts roughly 200 months — the bound is loose because $\pi_{\min}$ is
-small.
+**Claim.** The spectral gap predicts how long "long run" takes.
+
+**Setup.** Eigenvalues of $P$ computed numerically; empirical mixing time
+defined as the smallest $n$ such that
+$\max_i \tfrac{1}{2}\|P^n_{i,:} - \pi\|_1 \leq 1/4$.
+
+**Result.** The gap is $\gamma \approx 0.01$ and the empirical mixing time
+is approximately 70 months. The theoretical bound
+$t_{\mathrm{mix}} \leq (1/\gamma) \ln(1 / (\varepsilon \pi_{\min}))$
+predicts roughly 200 months — loose because $\pi_{\min}$ is small.
+
+**Connection.** Makes the "long run is years, not quarters" claim of
+[the stationary analysis](#where-will-the-team-settle) quantitative — the
+spectrum figure lives there.
 
 ### Experiment C — Absorption times
 
-The bar chart in Section 4 shows the expected time to exit per starting
-level under the absorbing variant: 46 months for Junior, 75 for Mid, 100
-for Senior. Standard deviations from the variance formula $(2N - I)t - t \odot t$
-are 47, 50, 99 — so the 1-sigma intervals are wide. Senior tenure is
-geometrically distributed with parameter 0.01, mean 100, standard deviation
-99 — the chain "gambles" on never resigning, with high variance.
+**Claim.** The fundamental matrix gives exact expected tenures per starting
+level.
+
+**Setup.** Absorbing variant ($p_{41} = 0$); $t = N\mathbf{1}$ and the
+variance formula $(2N - I)t - t \odot t$ evaluated per level.
+
+**Result.** Expected time to exit: 46 months for Junior, 75 for Mid, 100
+for Senior — with standard deviations 47, 50, 99, so the 1-sigma intervals
+are wide. Senior tenure is geometrically distributed with parameter 0.01:
+mean 100, standard deviation 99 — the chain "gambles" on never resigning.
+
+**Connection.** The fundamental-matrix machinery of
+[How Long Will It Take?](#how-long-will-it-take) — the bar chart lives
+there.
 
 ### Experiment D — Birth-death steady state
 
-Two figures validate the Poisson result. The first plots the analytical
-detailed-balance distribution against the Poisson PMF; they coincide to
-floating-point precision. The second simulates 200 paths over 400 months,
-discards the first 200 months as burn-in, and plots a histogram of the
-remaining team-size samples.
+**Claim.** Under constant hiring and per-capita attrition, the equilibrium
+team size is exactly Poisson($\rho$).
+
+**Setup.** Two checks: the analytical detailed-balance distribution against
+the Poisson PMF; and 200 simulated paths over 400 months, first 200 months
+discarded as burn-in, histogram of the remaining samples.
+
+**Result.** The analytical distributions coincide to floating-point
+precision. The empirical mean is 80.33 and variance 80.99, both within 1%
+of the Poisson(80) target; the KS-style
+$\sup |F_{\mathrm{emp}} - F_{\mathrm{Poisson}}|$ is 0.022 — well below
+typical critical values for $N \sim 40\,000$ samples.
+
+**Connection.** The detailed-balance derivation of
+[Birth-Death Processes](#birth-death-processes).
 
 ![Birth-death steady state — empirical histogram vs Poisson](../figures/birth_death_steady_simulation.png)
 
-The empirical mean is 80.33 and the empirical variance is 80.99, both
-within 1% of the Poisson(80) target. The Kolmogorov–Smirnov-style
-$\sup |F_{\mathrm{emp}} - F_{\mathrm{Poisson}}|$ is 0.022 — well below
-typical critical values for $N \sim 40\,000$ samples — confirming that
-empirical and analytical agree.
+### Experiment E — The five scenarios
 
-### Experiment E — All five scenarios
+**Claim.** The analytical mean and the exact 5–95% band describe what
+simulated teams actually do.
 
-The five scenario figures from Section 6 *are* the experiment: each one
-overlays 30 simulated paths on the analytical mean and the exact 5–95%
-band derived from the truncated CTMC. The simulated paths visually fill
-the band, providing an end-to-end check of the model's correctness.
+**Setup.** Each scenario figure of [The Headcount Model](#the-headcount-model)
+overlays 30 simulated paths on the analytical mean and the exact band
+derived from the truncated CTMC.
+
+**Result.** The simulated paths visually fill the band in every scenario —
+an end-to-end check of the model's correctness.
+
+**Connection.** Validates the applied model and all five scenario answers.
 
 ### Experiment F — Sensitivity tornado
 
-The tornado figure ranks rates by impact magnitude. Senior attrition
-$p_{34}$ leads, with $|\Delta \pi_S| \approx 0.17$ across $\pm 50\%$. The
-next contenders are Mid→Senior promotion ($p_{23}$, $\Delta = 0.12$) and
-Junior→Mid promotion ($p_{12}$, $\Delta = 0.11$). The smallest effect is
-from Junior attrition ($\Delta = 0.005$) — counterintuitively low, because
-churn at the entry level is largely absorbed by replacement hiring under
-the recycling variant.
+**Claim.** A small number of rates dominates long-run size and composition.
+
+**Setup.** Each rate varied by $\pm 50\%$ around its base value; impact on
+$\rho$ and on the Senior share ranked by magnitude.
+
+**Result.** Senior attrition $p_{34}$ leads, with
+$|\Delta \pi_S| \approx 0.17$. Next come Mid→Senior promotion ($p_{23}$,
+$\Delta = 0.12$) and Junior→Mid promotion ($p_{12}$, $\Delta = 0.11$). The
+smallest effect is Junior attrition ($\Delta = 0.005$) — counterintuitively
+low, because entry-level churn is largely absorbed by replacement hiring.
+
+**Connection.** Grounds the "which lever to pull" step of
+[A Practical Framework](#a-practical-framework) — the tornado figure lives
+in [The Headcount Model](#the-headcount-model).
 
 ### Experiment G — Trajectory animation
 
-The animated GIF reveals 100 simulated trajectories month by month,
-overlaid with the analytical mean and 5–95% band. The visual experience —
-paths fanning out from $n_0 = 45$, cradled by the band as it widens, the
-mean curve climbing toward $\rho = 80$ — is the clearest single artefact
-for non-technical audiences. It is the figure most worth showing in a
-planning meeting.
+**Claim.** The fan of simulated trajectories is the clearest single
+artefact for non-technical audiences.
+
+**Setup.** An animated GIF reveals 100 simulated trajectories month by
+month, overlaid with the analytical mean and 5–95% band (companion
+repository).
+
+**Result.** Paths fan out from $n_0 = 45$, cradled by the band as it
+widens, with the mean curve climbing toward $\rho = 80$. It is the figure
+most worth showing in a planning meeting.
+
+**Connection.** Everything at once — the visual summary of the whole model.
 
 ### Cross-cutting validation
 
@@ -763,14 +779,15 @@ master runner that reproduces all 13 figures with one command.
 
 ---
 
-## 8. Connecting to Budget — The Bridge to the Previous Article
+## The Bridge to the Budget
 
-The previous article, *Monte Carlo Budget Simulation*, simulates the total
-annual budget by sampling headcount and salaries jointly — but treats
-headcount as a fixed input from outside. This article supplies precisely
-what was missing: the *distribution* of headcount over the planning
-horizon. Together, the two cover the full personnel-budget problem under
-uncertainty.
+The companion article,
+[Why Your Budget Never Hits the Exact Number](monte-carlo-budget.html),
+simulates the total annual budget by sampling headcount and salaries
+jointly — but treats headcount as a fixed input from outside. This article
+supplies precisely what was missing: the *distribution* of headcount over
+the planning horizon. Together, the two cover the full personnel-budget
+problem under uncertainty.
 
 The closed-form bridge uses the laws of total expectation and total
 variance. Let $N$ = team size at month 12 and $S_i$ = i.i.d. salaries with
@@ -796,20 +813,20 @@ $$
 \mathbb{E}[C]  \approx  6.76 \,\mathrm{M}, \qquad \mathrm{sd}(C)  \approx  0.86 \,\mathrm{M}.
 $$
 
-These are the same numbers the previous article's Monte Carlo recovers
-within sampling error. The closed form derived here is fast and exact to
-second order; the Monte Carlo of the previous article is needed for full
-distributions, percentiles, and tail probabilities. The two articles
-compose: this one supplies the headcount distribution ($\mathbb{E}[N]$,
-$\mathrm{Var}[N]$); the previous one simulates the joint object that
-includes correlation across employees and within-month dependencies.
+These are the same numbers the companion's Monte Carlo recovers within
+sampling error. The closed form derived here is fast and exact to second
+order; the Monte Carlo of the companion is needed for full distributions,
+percentiles, and tail probabilities. The two articles compose: this one
+supplies the headcount distribution ($\mathbb{E}[N]$, $\mathrm{Var}[N]$);
+the companion simulates the joint object that includes correlation across
+employees and within-month dependencies.
 
 ---
 
-## 9. A Practical Framework for Workforce Planners
+## A Practical Framework
 
 A planner who wants to start using the toolkit doesn't need every theorem
-in this article. They need a four-step process.
+in this article. They need a short process.
 
 **1. Define the chain.** List the career levels that matter (Junior, Mid,
 Senior, or whatever your organisation calls them) plus an Exit state.
@@ -843,7 +860,7 @@ write down the threshold and the action triggered when it is crossed:
 | $P(n_{12} \geq \text{target})$ drops | below 60% | release additional recruitment budget; revisit $\lambda$ |
 | Senior $\pi_S$ drops below floor | below 35% | open targeted Senior retention programme |
 | Mixing-time bound exceeded | $> 60$ months | accept that current quarter's hiring won't move steady state; redirect to retention |
-| Layoff scenario entered | $n_0$ cut by $> 10\%$ | re-run S3 weekly; re-baseline $\rho$ |
+| Layoff scenario entered | $n_0$ cut by $> 10\%$ | re-run the recovery scenario weekly; re-baseline $\rho$ |
 
 The thresholds are decisions, not facts — they encode the planner's risk
 tolerance. The model computes the probabilities; the thresholds define
@@ -859,7 +876,42 @@ this apparatus is high.
 
 ---
 
-## 10. Conclusion
+## Limitations
+
+The model is deliberately simple; the boundaries below are where a real
+deployment must look before trusting the closed forms.
+
+**Memorylessness.** The Markov property assumes attrition and promotion
+depend only on the current level, not on tenure. Cohort effects — new
+hires churning faster in their first six months — require expanding the
+state space (level × tenure bucket) at the cost of more rates to estimate.
+
+**Time-homogeneous rates.** All rates are constant over the horizon. Real
+rates drift with the labour market, compensation reviews, and
+reorganisations. The framework accepts updated rates at any time — but
+each update resets the transient analysis, and long-run statements assume
+the rates persist.
+
+**Decoupled size and composition.** Team size (birth-death) and
+career-level composition (DTMC) are modelled independently. As discussed
+in [The Headcount Model](#the-headcount-model), this is accurate when
+attrition is roughly homogeneous across levels and breaks under strongly
+heterogeneous attrition, capacity-coupled hiring, or cohort effects — the
+bias for the default parameters is 1–3% on second moments.
+
+**Estimation risk.** Transition rates estimated from 12–24 months of HR
+data on a 50-person team carry substantial sampling error, which propagates
+to every downstream quantity. The article treats rates as known;
+quantifying rate uncertainty (e.g., via Bayesian updating of the rates
+themselves) is a natural extension.
+
+**Single, closed team.** No transfers between teams, no re-hires, no
+contractor pool. Networked workforce flows need a richer state space than
+the single chain used here.
+
+---
+
+## Conclusion
 
 A headcount plan that names a single number is a lossy compression of the
 random process underneath. The compression hides three pieces of useful
@@ -880,7 +932,8 @@ stationary distribution; they can only redirect the transient trajectory
 toward it. Planners who treat the steady state as a destination will be
 disappointed; planners who use it as a compass will be calibrated.
 
-This article is the natural complement to *Monte Carlo Budget Simulation*.
+This article is the natural complement to
+[Why Your Budget Never Hits the Exact Number](monte-carlo-budget.html).
 There, the total budget was simulated assuming a known headcount; here,
 headcount itself was modelled as the random process it actually is.
 Together, the two convert workforce planning from a series of educated
@@ -925,13 +978,11 @@ priced, and watched.
   Press, 11th ed.
 - Taylor, H. M. & Karlin, S. (1998). *An Introduction to Stochastic
   Modeling*. Academic Press, 3rd ed.
-- Author's previous article: *Monte Carlo Budget Simulation* (referenced
-  in Sections 1, 8 and 10; consumes the headcount distribution produced
-  here).
 
 ---
 
-*Reproducibility note. All figures and numerical results in this article
-are reproduced by versioned scripts in the companion repository. Run
-`pip install -e ".[dev]"` then `python scripts/run_all_experiments.py`
-to regenerate the full figure set with seed 2026.*
+*All figures and numbers in this article are reproduced by versioned
+scripts with fixed seed 2026 in the
+[companion repository](https://github.com/brunoramosmartins/headcount-dynamics-article).
+Run `pip install -e ".[dev]"` then `python scripts/run_all_experiments.py`
+to regenerate the full figure set.*
