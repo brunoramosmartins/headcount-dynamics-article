@@ -1,3 +1,11 @@
+---
+title: "The Team That Replaces Itself"
+description: "Headcount dynamics and turnover as stochastic processes — from Markov chains to birth-death models."
+date: 2026-07-11
+category: statistics
+tags: markov-chains, stochastic-processes, workforce-planning, budgeting
+---
+
 # The Team That Replaces Itself
 
 ## Headcount Dynamics and Turnover as Stochastic Processes — from Markov Chains to Birth-Death Models
@@ -132,7 +140,7 @@ buys.
 ### Formal definition
 
 A discrete-time Markov chain on a finite state space $S = \{1, \ldots, K\}$
-is a sequence of random variables $\{X_n\}_{n \geq 0}$ such that the
+is a sequence of random variables $(X_n)_{n \geq 0}$ such that the
 probability of the next state depends only on the present state, not on the
 history:
 

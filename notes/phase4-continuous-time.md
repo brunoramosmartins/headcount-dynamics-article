@@ -13,7 +13,7 @@ for team size: a Poisson with mean $\lambda / \mu$.
 
 ### 1.1 Definition
 
-Let $\{X_t\}_{t \geq 0}$ be a stochastic process on a finite (or countable)
+Let $(X_t)_{t \geq 0}$ be a stochastic process on a finite (or countable)
 state space $S$. It is a **time-homogeneous CTMC** if for every
 $0 \leq s_1 < \cdots < s_k < s$ and states $i_1, \ldots, i_k, i, j$,
 

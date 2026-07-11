@@ -2,7 +2,7 @@
 
 ## 1. The Markov Property
 
-Let $\{X_n\}_{n \geq 0}$ be a sequence of random variables taking values in a finite (or countable) state space $S = \{1, 2, \ldots, K\}$. The sequence is a **Markov chain** if, for every $n \geq 0$ and every $i_0, i_1, \ldots, i_{n+1} \in S$ such that $P(X_n = i_n, \ldots, X_0 = i_0) > 0$,
+Let $(X_n)_{n \geq 0}$ be a sequence of random variables taking values in a finite (or countable) state space $S = \{1, 2, \ldots, K\}$. The sequence is a **Markov chain** if, for every $n \geq 0$ and every $i_0, i_1, \ldots, i_{n+1} \in S$ such that $P(X_n = i_n, \ldots, X_0 = i_0) > 0$,
 
 $$
 P(X_{n+1} = j \mid X_n = i, X_{n-1} = i_{n-1}, \ldots, X_0 = i_0)  =  P(X_{n+1} = j \mid X_n = i)  =  p_{ij}.

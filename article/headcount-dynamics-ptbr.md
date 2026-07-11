@@ -141,7 +141,7 @@ e as Seções 3 e 4 mostram o que se ganha em troca.
 
 Uma cadeia de Markov em tempo discreto sobre um espaço de estados finito
 $S = \{1, \ldots, K\}$ é uma sequência de variáveis aleatórias
-$\{X_n\}_{n \geq 0}$ tal que a probabilidade do próximo estado depende
+$(X_n)_{n \geq 0}$ tal que a probabilidade do próximo estado depende
 apenas do estado presente, não do histórico:
 
 $$
